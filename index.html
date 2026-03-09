@@ -137,7 +137,6 @@
             <header class="poke-header p-4 md:p-6 flex flex-col items-center relative">
                 <div class="pokeball-center mb-4 md:mb-6 shadow-lg animate-bounce"></div>
                 
-                <!-- 標題優化：手機版 text-lg 確保一行呈現 -->
                 <h1 id="main-title" contenteditable="true" spellcheck="false" class="editable-field text-lg sm:text-2xl md:text-5xl font-black text-slate-800 bg-white/95 px-4 sm:px-10 py-3 md:py-4 rounded-full border-4 border-slate-800 transition-all z-10 mb-4 md:mb-6 text-center shadow-sm whitespace-nowrap overflow-hidden">
                     二苓國小 114 學年度課表
                 </h1>
@@ -153,9 +152,6 @@
                     </div>
                 </div>
             </header>
-            <div id="status-bar" class="bg-slate-900 text-yellow-400 py-2 text-center text-[10px] md:text-sm font-bold tracking-[0.1em] md:tracking-[0.2em] uppercase">
-                Trainer: <span id="display-name">---</span> • Region: Siaogang • Rank: Master • ID: <span id="display-id">LOCAL</span>
-            </div>
         </div>
 
         <!-- 課表主體 -->
@@ -164,12 +160,12 @@
                 <table class="w-full border-collapse table-fixed min-w-[320px]">
                     <thead>
                         <tr class="bg-blue-600 text-white">
-                            <th class="p-1 border-r-4 border-b-4 border-slate-800 w-[65px] sm:w-[75px] bg-blue-700 font-bold italic text-[10px] sm:text-sm">節次</th>
-                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-black text-xs sm:text-lg w-auto">週一</th>
-                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-black text-xs sm:text-lg w-auto">週二</th>
-                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-black text-xs sm:text-lg w-auto">週三</th>
-                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-black text-xs sm:text-lg w-auto">週四</th>
-                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-black text-xs sm:text-lg w-auto">週五</th>
+                            <th class="p-1 border-r-4 border-b-4 border-slate-800 w-[65px] sm:w-[75px] bg-blue-700 font-bold italic text-[10px] sm:text-sm text-center">節次</th>
+                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-black text-xs sm:text-lg w-auto text-center">週一</th>
+                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-black text-xs sm:text-lg w-auto text-center">週二</th>
+                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-black text-xs sm:text-lg w-auto text-center">週三</th>
+                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-black text-xs sm:text-lg w-auto text-center">週四</th>
+                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-black text-xs sm:text-lg w-auto text-center">週五</th>
                         </tr>
                     </thead>
                     <tbody id="timetable-body">
@@ -179,7 +175,7 @@
             </div>
         </div>
 
-        <!-- 按鈕區優化：手機版 grid-cols-3 確保一行顯示 -->
+        <!-- 按鈕區 -->
         <div class="grid grid-cols-3 gap-2 md:gap-4 no-print pb-12">
             <button onclick="saveAllToCloud()" class="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 bg-emerald-500 hover:bg-emerald-600 text-white border-b-4 md:border-b-8 border-emerald-800 p-2 md:p-4 rounded-xl md:rounded-2xl font-black text-[10px] sm:text-sm md:text-lg transition-all active:border-b-0 active:translate-y-1 md:active:translate-y-2">
                 <span>💾</span><span class="whitespace-nowrap">雲端儲存</span>
@@ -226,15 +222,15 @@
         CLASSES.push("自定義");
 
         const DEFAULT_PERIODS = [
-            { name: "晨", time: "08:00~08:25" },
-            { name: "一", time: "08:30~09:10" },
-            { name: "二", time: "09:20~10:00" },
-            { name: "三", time: "10:30~11:10" },
-            { name: "四", time: "11:20~12:00" },
-            { name: "午", time: "12:00~13:35" },
-            { name: "五", time: "13:40~14:20" },
-            { name: "六", time: "14:30~15:10" },
-            { name: "七", time: "15:20~16:00" }
+            { name: "晨光", time: "08:00~08:25" },
+            { name: "第一節", time: "08:30~09:10" },
+            { name: "第二節", time: "09:20~10:00" },
+            { name: "第三節", time: "10:30~11:10" },
+            { name: "第四節", time: "11:20~12:00" },
+            { name: "午休", time: "12:00~13:35" },
+            { name: "第五節", time: "13:40~14:20" },
+            { name: "第六節", time: "14:30~15:10" },
+            { name: "第七節", time: "15:20~16:00" }
         ];
 
         let state = {
@@ -260,7 +256,6 @@
 
                 auth.onAuthStateChanged(user => {
                     state.user = user;
-                    if (user) document.getElementById('display-id').innerText = user.uid.substring(0, 8);
                     initApp();
                 });
             } else {
@@ -413,7 +408,6 @@
             sel.appendChild(addOpt);
 
             sel.value = state.currentTrainer;
-            document.getElementById('display-name').innerText = state.currentTrainer;
         }
 
         async function handleUserSwitch() {
@@ -552,7 +546,6 @@
                 } else {
                     resetTableUI();
                 }
-                document.getElementById('display-name').innerText = state.currentTrainer;
             } catch (err) {
                 console.error("Load error", err);
             }
