@@ -28,20 +28,20 @@
         /* 寶可夢屬性配色系統 */
         .type-none { background-color: #f1f5f9 !important; color: #94a3b8 !important; border: 1px solid #e2e8f0 !important; }
         .type-國語 { background-color: #ff4422 !important; color: white !important; border: 1px solid #b22d14 !important; }
-        .type-英語 { background-color: #3399ff !important; color: white !important; border: 1px solid #2266aa !important; }
-        .type-數學 { background-color: #ffcc33 !important; color: #443300 !important; border: 1px solid #bba100 !important; }
-        .type-生活 { background-color: #77cc55 !important; color: white !important; border: 1px solid #4d8c34 !important; }
-        .type-自然 { background-color: #7ac852 !important; color: white !important; border: 1px solid #4a8031 !important; }
-        .type-社會 { background-color: #b8a038 !important; color: white !important; border: 1px solid #786824 !important; }
-        .type-藝術 { background-color: #ee99ee !important; color: white !important; border: 1px solid #aa66aa !important; }
-        .type-綜合 { background-color: #a8a878 !important; color: white !important; border: 1px solid #6d6d4e !important; }
-        .type-健康 { background-color: #ffb7d5 !important; color: #a04070 !important; border: 1px solid #d880a0 !important; }
-        .type-體育 { background-color: #ff8000 !important; color: white !important; border: 1px solid #b05800 !important; }
-        .type-彈性 { background-color: #a890f0 !important; color: white !important; border: 1px solid #6d5da1 !important; }
-        .type-資訊 { background-color: #b8b8d0 !important; color: #334144 !important; border: 1px solid #707080 !important; }
-        .type-音樂 { background-color: #6890f0 !important; color: white !important; border: 1px solid #445e9c !important; }
-        .type-藝美 { background-color: #f85888 !important; color: white !important; border: 1px solid #a13959 !important; }
-        .type-本土語 { background-color: #e0c068 !important; color: white !important; border: 1px solid #8e7a42 !important; }
+        .type-英語 { background-color: #3399ff !important; color: white !important; border: 2px solid #2266aa !important; }
+        .type-數學 { background-color: #ffcc33 !important; color: #443300 !important; border: 2px solid #bba100 !important; }
+        .type-生活 { background-color: #77cc55 !important; color: white !important; border: 2px solid #4d8c34 !important; }
+        .type-自然 { background-color: #7ac852 !important; color: white !important; border: 2px solid #4a8031 !important; }
+        .type-社會 { background-color: #b8a038 !important; color: white !important; border: 2px solid #786824 !important; }
+        .type-藝術 { background-color: #ee99ee !important; color: white !important; border: 2px solid #aa66aa !important; }
+        .type-綜合 { background-color: #a8a878 !important; color: white !important; border: 2px solid #6d6d4e !important; }
+        .type-健康 { background-color: #ffb7d5 !important; color: #a04070 !important; border: 2px solid #d880a0 !important; }
+        .type-體育 { background-color: #ff8000 !important; color: white !important; border: 2px solid #b05800 !important; }
+        .type-彈性 { background-color: #a890f0 !important; color: white !important; border: 2px solid #6d5da1 !important; }
+        .type-資訊 { background-color: #b8b8d0 !important; color: #334144 !important; border: 2px solid #707080 !important; }
+        .type-音樂 { background-color: #6890f0 !important; color: white !important; border: 2px solid #445e9c !important; }
+        .type-藝美 { background-color: #f85888 !important; color: white !important; border: 2px solid #a13959 !important; }
+        .type-本土語 { background-color: #e0c068 !important; color: white !important; border: 2px solid #8e7a42 !important; }
 
         .game-card {
             border: 6px solid var(--poke-black);
@@ -87,19 +87,22 @@
             color: var(--poke-black);
         }
 
+        /* 強制所有輸入元素繼承標楷體並置中 */
         input, select, button, textarea {
             font-family: inherit;
+            text-align: center;
+            text-align-last: center; /* 確保選單內容置中 */
         }
 
-        #main-title:focus {
+        #main-title:focus, .time-edit:focus {
             background-color: rgba(255, 255, 255, 1);
-            box-shadow: 0 0 0 4px var(--poke-blue);
+            box-shadow: 0 0 0 3px var(--poke-blue);
             outline: none;
+            border-radius: 4px;
         }
 
-        /* 優化表格布局 */
         .poke-table {
-            table-layout: fixed; /* 強制平均分配欄位 */
+            table-layout: fixed;
             width: 100%;
         }
 
@@ -156,8 +159,7 @@
                 <table class="poke-table border-separate border-spacing-0">
                     <thead>
                         <tr class="bg-blue-600 text-white">
-                            <!-- 手機版寬度縮小 -->
-                            <th class="p-1 md:p-4 border-r-2 md:border-r-4 border-b-4 border-slate-800 w-12 md:w-32 bg-blue-700 font-bold italic text-xs md:text-base">節次</th>
+                            <th class="p-1 md:p-4 border-r-2 md:border-r-4 border-b-4 border-slate-800 w-12 md:w-32 bg-blue-700 font-bold italic text-xs md:text-base text-center">節次</th>
                             <th class="p-1 md:p-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週一</th>
                             <th class="p-1 md:p-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週二</th>
                             <th class="p-1 md:p-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週三</th>
@@ -193,16 +195,18 @@
 
     <script>
         const courses = ["", "國語", "英語", "數學", "生活", "社會", "自然", "藝術", "綜合", "健康", "體育", "彈性", "本土語", "資訊", "音樂", "藝美", "自定義"];
-        const periods = [
-            { name: "晨", time: "08:00" },
-            { name: "一", time: "08:40" },
-            { name: "二", time: "09:30" },
-            { name: "三", time: "10:30" },
-            { name: "四", time: "11:20" },
-            { name: "午", time: "12:00" },
-            { name: "五", time: "13:30" },
-            { name: "六", time: "14:20" },
-            { name: "七", time: "15:10" }
+        
+        // 預設時間區間
+        const defaultPeriods = [
+            { name: "晨", time: "08:00~08:25" },
+            { name: "一", time: "08:30~09:10" },
+            { name: "二", time: "09:20~10:00" },
+            { name: "三", time: "10:30~11:10" },
+            { name: "四", time: "11:20~12:00" },
+            { name: "午", time: "12:00~13:35" },
+            { name: "五", time: "13:40~14:20" },
+            { name: "六", time: "14:30~15:10" },
+            { name: "七", time: "15:20~16:00" }
         ];
 
         let peopleList = JSON.parse(localStorage.getItem('poke_people_list')) || ["李宜昆"];
@@ -213,15 +217,20 @@
             const tbody = document.getElementById('timetable-body');
             tbody.innerHTML = ''; 
 
-            periods.forEach((p, pIdx) => {
+            defaultPeriods.forEach((p, pIdx) => {
                 const tr = document.createElement('tr');
                 
+                // 時間列 - 設定為可編輯
                 const tdTime = document.createElement('td');
-                tdTime.className = 'p-1 md:p-3 border-r-2 md:border-r-4 border-b-2 md:border-b-4 border-slate-800 bg-slate-100 text-center overflow-hidden';
+                tdTime.id = `time-col-${pIdx}`;
+                tdTime.contentEditable = "true";
+                tdTime.className = 'time-edit p-1 md:p-2 border-r-2 md:border-r-4 border-b-2 md:border-b-4 border-slate-800 bg-slate-100 text-center overflow-hidden transition-all';
                 tdTime.innerHTML = `
-                    <div class="font-bold text-slate-800 text-[10px] md:text-sm">${p.name}</div>
+                    <div class="font-bold text-slate-800 text-[11px] md:text-sm">${p.name}</div>
                     <div class="text-[8px] md:text-[10px] text-slate-500 font-bold">${p.time}</div>
                 `;
+                // 監聽修改後存檔
+                tdTime.onblur = () => saveData(true);
                 tr.appendChild(tdTime);
 
                 for (let d = 1; d <= 5; d++) {
@@ -230,8 +239,8 @@
                     
                     const select = document.createElement('select');
                     select.id = `cell-${pIdx}-${d}`;
-                    // 手機版字體縮小至 text-[10px] 並減少高度
-                    select.className = 'w-full h-10 md:h-14 bg-transparent text-center rounded-md md:rounded-lg cursor-pointer outline-none font-bold text-[10px] sm:text-xs md:text-lg transition-all appearance-none cell-hover shadow-inner';
+                    // 字體大小自適應，強制置中
+                    select.className = 'w-full h-10 md:h-14 bg-transparent text-center rounded-md md:rounded-lg cursor-pointer outline-none font-bold text-[11px] sm:text-xs md:text-lg transition-all appearance-none cell-hover shadow-inner';
                     
                     courses.forEach(c => {
                         const opt = document.createElement('option');
@@ -291,7 +300,7 @@
 
         function handleCourseChange(select, value) {
             if (value === "自定義") {
-                const customVal = prompt("請輸入課程名稱：");
+                const customVal = prompt("發現新招式！請輸入名稱：");
                 if (customVal) {
                     const newOpt = document.createElement('option');
                     newOpt.value = customVal;
@@ -308,7 +317,7 @@
 
         function updateCellStyle(select) {
             const val = select.value;
-            select.className = 'w-full h-10 md:h-14 text-center rounded-md md:rounded-lg cursor-pointer outline-none font-bold text-[10px] sm:text-xs md:text-lg transition-all appearance-none cell-hover shadow-inner';
+            select.className = 'w-full h-10 md:h-14 text-center rounded-md md:rounded-lg cursor-pointer outline-none font-bold text-[11px] sm:text-xs md:text-lg transition-all appearance-none cell-hover shadow-inner';
             
             if (val) {
                 const typeClass = `type-${val}`;
@@ -329,22 +338,47 @@
 
         function saveData(silent = false) {
             const data = {};
+            // 課程儲存
             document.querySelectorAll('tbody select').forEach(s => {
                 data[s.id] = s.value;
             });
             localStorage.setItem(`poke_data_${currentPerson}`, JSON.stringify(data));
+            
+            // 標題儲存
             localStorage.setItem(`poke_global_title`, document.getElementById('main-title').innerText);
+            
+            // 自定義時間儲存
+            const timeData = {};
+            document.querySelectorAll('.time-edit').forEach(td => {
+                timeData[td.id] = td.innerHTML;
+            });
+            localStorage.setItem(`poke_global_times`, JSON.stringify(timeData));
+
             if (!silent) showToast("進度已儲存！");
         }
 
         function loadData() {
+            // 載入課程資料
             const savedData = localStorage.getItem(`poke_data_${currentPerson}`);
             const savedTitle = localStorage.getItem(`poke_global_title`);
+            const savedTimes = localStorage.getItem(`poke_global_times`);
+
             if (savedTitle) document.getElementById('main-title').innerText = savedTitle;
+            
+            // 載入自定義時間
+            if (savedTimes) {
+                const timeData = JSON.parse(savedTimes);
+                for (const id in timeData) {
+                    const td = document.getElementById(id);
+                    if (td) td.innerHTML = timeData[id];
+                }
+            }
+
             document.querySelectorAll('tbody select').forEach(select => {
                 select.value = "";
                 updateCellStyle(select);
             });
+
             if (savedData) {
                 const data = JSON.parse(savedData);
                 for (const id in data) {
