@@ -163,7 +163,6 @@
                 <table class="w-full border-collapse table-fixed">
                     <thead>
                         <tr class="bg-blue-600 text-white">
-                            <!-- 縮小節次寬度，平均分配空間給 Mon-Fri -->
                             <th class="p-2 border-r-4 border-b-4 border-slate-800 w-[75px] bg-blue-700 font-bold italic text-sm">節次</th>
                             <th class="p-4 border-b-4 border-slate-800 font-black text-lg w-auto">週一</th>
                             <th class="p-4 border-b-4 border-slate-800 font-black text-lg w-auto">週二</th>
@@ -245,7 +244,6 @@
 
         // --- 初始化流程 ---
         window.onload = async () => {
-            // 安全機制：3秒後強制關閉讀取畫面
             setTimeout(hideLoading, 3000);
 
             if (hasFirebaseConfig && auth) {
@@ -265,7 +263,6 @@
                     initApp();
                 });
             } else {
-                // 無 Firebase 環境 (單機模式)
                 initApp();
             }
         };
@@ -289,7 +286,6 @@
             DEFAULT_PERIODS.forEach((p, idx) => {
                 const tr = document.createElement('tr');
                 
-                // 時間格：寬度與標題同步，內距縮小，時間文字強制不換行
                 const tdTime = document.createElement('td');
                 tdTime.className = "p-1 border-r-4 border-b-2 border-slate-800 bg-slate-50 text-center transition-colors hover:bg-yellow-50 w-[75px]";
                 tdTime.innerHTML = `
@@ -300,15 +296,17 @@
 
                 for (let d = 1; d <= 5; d++) {
                     const td = document.createElement('td');
-                    td.className = "p-1 md:p-1.5 border-b-2 border-r-2 border-slate-200 transition-all text-center";
+                    td.className = "p-1 border-b-2 border-r-2 border-slate-200 transition-all text-center";
                     
                     const container = document.createElement('div');
                     container.id = `cell-box-${idx}-${d}`;
-                    container.className = "merged-cell-container rounded-xl shadow-sm";
+                    // 縮小整體高度比例
+                    container.className = "merged-cell-container rounded-xl shadow-sm h-12 md:h-14";
 
                     const selCourse = document.createElement('select');
                     selCourse.id = `course-${idx}-${d}`;
-                    selCourse.className = "w-full h-10 md:h-12 bg-transparent cursor-pointer font-black text-sm md:text-lg transition-all border-b border-black/10";
+                    // 佔據 2/3 高度
+                    selCourse.className = "w-full h-2/3 bg-transparent cursor-pointer font-black text-sm md:text-lg transition-all border-b border-black/10 flex items-center justify-center";
                     
                     COURSES.forEach(c => {
                         const opt = document.createElement('option');
@@ -319,7 +317,8 @@
 
                     const selClass = document.createElement('select');
                     selClass.id = `class-${idx}-${d}`;
-                    selClass.className = "w-full h-7 md:h-9 bg-white/50 cursor-pointer font-bold text-[11px] md:text-sm text-slate-600 hover:bg-white/80";
+                    // 佔據 1/3 高度
+                    selClass.className = "w-full h-1/3 bg-white/50 cursor-pointer font-bold text-[9px] md:text-xs text-slate-600 hover:bg-white/80 flex items-center justify-center";
                     
                     CLASSES.forEach(c => {
                         const opt = document.createElement('option');
