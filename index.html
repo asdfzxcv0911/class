@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>二苓國小114學年度寶可夢課表</title>
+    <title>二苓國小 114學年度寶可夢雲端課表</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
     <style>
-        /* 設定全域字體為標楷體 */
         body {
             font-family: "DFKai-SB", "BiauKai", "標楷體", "KaiTi", serif;
-            background-color: #f6f8fc;
+            background-color: #f0f4f8;
             background-image: 
-                radial-gradient(var(--poke-yellow) 0.5px, transparent 0.5px),
-                radial-gradient(var(--poke-yellow) 0.5px, #f6f8fc 0.5px);
-            background-size: 20px 20px;
-            background-position: 0 0, 10px 10px;
+                radial-gradient(#ffcb05 0.5px, transparent 0.5px),
+                radial-gradient(#ffcb05 0.5px, #f0f4f8 0.5px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
         }
 
         :root {
@@ -25,179 +27,193 @@
             --poke-blue: #2a75bb;
         }
 
-        /* 寶可夢屬性配色系統 */
-        .type-none { background-color: #f1f5f9 !important; color: #94a3b8 !important; border: 1px solid #e2e8f0 !important; }
-        .type-國語 { background-color: #ff4422 !important; color: white !important; border: 1px solid #b22d14 !important; }
-        .type-英語 { background-color: #3399ff !important; color: white !important; border: 2px solid #2266aa !important; }
-        .type-數學 { background-color: #ffcc33 !important; color: #443300 !important; border: 2px solid #bba100 !important; }
-        .type-生活 { background-color: #77cc55 !important; color: white !important; border: 2px solid #4d8c34 !important; }
-        .type-自然 { background-color: #7ac852 !important; color: white !important; border: 2px solid #4a8031 !important; }
-        .type-社會 { background-color: #b8a038 !important; color: white !important; border: 2px solid #786824 !important; }
-        .type-藝術 { background-color: #ee99ee !important; color: white !important; border: 2px solid #aa66aa !important; }
-        .type-綜合 { background-color: #a8a878 !important; color: white !important; border: 2px solid #6d6d4e !important; }
-        .type-健康 { background-color: #ffb7d5 !important; color: #a04070 !important; border: 2px solid #d880a0 !important; }
-        .type-體育 { background-color: #ff8000 !important; color: white !important; border: 2px solid #b05800 !important; }
-        .type-彈性 { background-color: #a890f0 !important; color: white !important; border: 2px solid #6d5da1 !important; }
-        .type-資訊 { background-color: #b8b8d0 !important; color: #334144 !important; border: 2px solid #707080 !important; }
-        .type-音樂 { background-color: #6890f0 !important; color: white !important; border: 2px solid #445e9c !important; }
-        .type-藝美 { background-color: #f85888 !important; color: white !important; border: 2px solid #a13959 !important; }
-        .type-本土語 { background-color: #e0c068 !important; color: white !important; border: 2px solid #8e7a42 !important; }
+        /* 屬性配色系統 */
+        .type-none { background-color: #f1f5f9 !important; color: #94a3b8 !important; }
+        .type-國語 { background-color: #ff4422 !important; color: white !important; }
+        .type-英語 { background-color: #3399ff !important; color: white !important; }
+        .type-數學 { background-color: #ffcc33 !important; color: #443300 !important; }
+        .type-生活 { background-color: #77cc55 !important; color: white !important; }
+        .type-自然 { background-color: #7ac852 !important; color: white !important; }
+        .type-社會 { background-color: #b8a038 !important; color: white !important; }
+        .type-藝術 { background-color: #ee99ee !important; color: white !important; }
+        .type-綜合 { background-color: #a8a878 !important; color: white !important; }
+        .type-健康 { background-color: #ffb7d5 !important; color: #a04070 !important; }
+        .type-體育 { background-color: #ff8000 !important; color: white !important; }
+        .type-彈性 { background-color: #a890f0 !important; color: white !important; }
+        .type-本土語 { background-color: #e0c068 !important; color: white !important; }
+        .type-資訊 { background-color: #b8b8d0 !important; color: #334144 !important; }
+        .type-音樂 { background-color: #6890f0 !important; color: white !important; }
 
         .game-card {
-            border: 6px solid var(--poke-black);
-            box-shadow: 10px 10px 0px rgba(0,0,0,0.1);
+            border: 4px solid var(--poke-black);
+            box-shadow: 8px 8px 0px rgba(0,0,0,0.15);
         }
 
         .poke-header {
             background: linear-gradient(180deg, var(--poke-red) 48%, var(--poke-black) 48%, var(--poke-black) 52%, var(--poke-white) 52%);
-            border-bottom: 6px solid var(--poke-black);
+            border-bottom: 4px solid var(--poke-black);
         }
 
-        .pokeball-icon {
-            width: 40px;
-            height: 40px;
+        .pokeball-center {
+            width: 50px; height: 50px;
             background: white;
-            border: 5px solid var(--poke-black);
+            border: 6px solid var(--poke-black);
             border-radius: 50%;
             position: relative;
+            z-index: 10;
         }
-        .pokeball-icon::after {
+
+        .pokeball-center::after {
             content: '';
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 12px; height: 12px;
+            width: 15px; height: 15px;
             background: white;
             border: 3px solid var(--poke-black);
             border-radius: 50%;
         }
 
-        .cell-hover:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-            cursor: pointer;
-        }
-
-        .trainer-select {
-            background: white;
-            border: 4px solid var(--poke-black);
-            padding: 5px 15px;
-            font-weight: bold;
-            border-radius: 10px;
-            color: var(--poke-black);
-        }
-
-        /* 強制所有輸入元素繼承標楷體並置中 */
-        input, select, button, textarea {
-            font-family: inherit;
+        select {
+            appearance: none;
+            -webkit-appearance: none;
             text-align: center;
-            text-align-last: center; /* 確保選單內容置中 */
-        }
-
-        #main-title:focus, .time-edit:focus {
-            background-color: rgba(255, 255, 255, 1);
-            box-shadow: 0 0 0 3px var(--poke-blue);
+            text-align-last: center;
             outline: none;
-            border-radius: 4px;
         }
 
-        .poke-table {
-            table-layout: fixed;
-            width: 100%;
+        .merged-cell-container {
+            border: 2px solid var(--poke-black);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.1s;
+        }
+
+        .merged-cell-container:hover {
+            transform: scale(1.02);
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .editable-field:focus {
+            outline: none;
+            background-color: #fffbeb;
+            box-shadow: 0 0 0 4px #fbbf24;
+            border-radius: 4px;
         }
 
         @media print {
             .no-print { display: none !important; }
-            body { 
-                background: white !important; 
-                -webkit-print-color-adjust: exact !important; 
-                print-color-adjust: exact !important; 
-            }
+            body { background: white !important; }
             .game-card { border-width: 2px; box-shadow: none; }
-            select { 
-                appearance: none !important; 
-                -webkit-appearance: none !important; 
-                border: none !important; 
-                color: black !important; 
-                background: transparent !important; 
-                font-size: 1.1rem !important;
-            }
-            #main-title { border: none !important; background: transparent !important; box-shadow: none !important; }
-            header { padding: 1rem !important; }
+            .poke-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .merged-cell-container { border-width: 1px; }
         }
 
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: var(--poke-blue); border: 2px solid white; border-radius: 5px; }
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
     </style>
 </head>
-<body class="p-2 md:p-8 min-h-screen">
+<body class="p-2 md:p-8 min-h-screen text-slate-800">
+
+    <div id="loading" class="loading-overlay">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-600"></div>
+    </div>
 
     <div class="max-w-6xl mx-auto">
-        <!-- 頂部區 -->
-        <div class="game-card rounded-2xl md:rounded-3xl overflow-hidden bg-white mb-4 md:mb-8">
-            <header class="poke-header p-4 md:p-8 flex flex-col items-center justify-center relative">
-                <div class="pokeball-icon mb-2 md:mb-4 animate-bounce no-print"></div>
-                <h1 id="main-title" contenteditable="true" class="text-xl md:text-5xl font-bold text-center text-slate-800 drop-shadow-sm bg-white/90 px-4 md:px-8 py-2 md:py-3 rounded-full border-2 md:border-4 border-slate-800 mb-3 md:mb-4 transition-all">
+        <!-- 頂部導航與標題 -->
+        <div class="game-card rounded-3xl overflow-hidden bg-white mb-6">
+            <header class="poke-header p-6 flex flex-col items-center relative">
+                <div class="pokeball-center mb-4 shadow-lg animate-bounce"></div>
+                
+                <h1 id="main-title" contenteditable="true" spellcheck="false" class="editable-field text-2xl md:text-5xl font-black text-slate-800 bg-white/95 px-8 py-3 rounded-full border-4 border-slate-800 mb-4 transition-all">
                     二苓國小 114 學年度課表
                 </h1>
-                
-                <div class="no-print flex items-center gap-2 bg-white/80 p-1 md:p-2 rounded-xl border-2 border-slate-800">
-                    <span class="font-bold text-slate-700 text-xs md:text-base">切換:</span>
-                    <select id="person-selector" class="trainer-select text-xs md:text-base outline-none cursor-pointer" onchange="switchPerson()">
-                    </select>
+
+                <div class="no-print flex flex-wrap justify-center gap-3 bg-white/90 p-3 rounded-2xl border-2 border-slate-800 shadow-sm">
+                    <div class="flex items-center gap-3 px-4">
+                        <span class="font-bold text-slate-700">當前訓練家:</span>
+                        <div class="relative">
+                            <select id="user-selector" onchange="handleUserSwitch()" class="bg-white border-2 border-slate-800 rounded-lg pl-4 pr-10 py-1.5 font-bold outline-none cursor-pointer hover:bg-slate-50 transition-colors">
+                            </select>
+                            <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[10px]">▼</div>
+                        </div>
+                    </div>
                 </div>
             </header>
-            <div id="trainer-info" class="p-2 bg-slate-800 text-yellow-400 text-center font-bold tracking-widest text-[10px] md:text-sm uppercase">
-                Trainer: 李宜昆 • Region: Er-Ling • Rank: Master
+            <div id="status-bar" class="bg-slate-900 text-yellow-400 py-2 text-center text-xs md:text-sm font-bold tracking-[0.2em] uppercase">
+                Trainer: <span id="display-name">---</span> • Region: Siaogang • Rank: Master • ID: <span id="display-id">---</span>
             </div>
         </div>
 
-        <!-- 課表區 -->
-        <div class="game-card rounded-xl md:rounded-2xl bg-white overflow-hidden mb-6">
-            <div class="w-full">
-                <table class="poke-table border-separate border-spacing-0">
+        <!-- 課表主體 -->
+        <div class="game-card rounded-2xl bg-white overflow-hidden mb-6 shadow-xl">
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse">
                     <thead>
                         <tr class="bg-blue-600 text-white">
-                            <th class="p-1 md:p-4 border-r-2 md:border-r-4 border-b-4 border-slate-800 w-12 md:w-32 bg-blue-700 font-bold italic text-xs md:text-base text-center">節次</th>
-                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週一</th>
-                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週二</th>
-                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週三</th>
-                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週四</th>
-                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週五</th>
+                            <th class="p-4 border-r-4 border-b-4 border-slate-800 w-28 bg-blue-700 font-bold italic">節次</th>
+                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg">週一</th>
+                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg">週二</th>
+                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg">週三</th>
+                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg">週四</th>
+                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg">週五</th>
                         </tr>
                     </thead>
                     <tbody id="timetable-body">
+                        <!-- 由 JS 動態生成 -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- 按鈕區 -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 no-print max-w-4xl mx-auto pb-10">
-            <button onclick="saveData()" class="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white border-b-4 md:border-b-8 border-blue-800 p-3 md:p-4 rounded-xl font-bold text-base md:text-xl transition-all active:border-b-0 active:translate-y-1 md:active:translate-y-2">
-                儲存進度
+        <!-- 控制按鈕 -->
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 no-print pb-12">
+            <button onclick="saveAllToCloud()" class="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white border-b-8 border-emerald-800 p-4 rounded-2xl font-black text-lg transition-all active:border-b-0 active:translate-y-2">
+                💾 雲端儲存
             </button>
-            <button onclick="window.print()" class="flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-slate-800 border-b-4 md:border-b-8 border-yellow-700 p-3 md:p-4 rounded-xl font-bold text-base md:text-xl transition-all active:border-b-0 active:translate-y-1 md:active:translate-y-2">
-                列印 / PDF
+            <button onclick="window.print()" class="flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-slate-900 border-b-8 border-amber-700 p-4 rounded-2xl font-black text-lg transition-all active:border-b-0 active:translate-y-2">
+                🖨️ 列印導出
             </button>
-            <button onclick="deleteCurrentPerson()" class="flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white border-b-4 md:border-b-8 border-red-800 p-3 md:p-4 rounded-xl font-bold text-base md:text-xl transition-all active:border-b-0 active:translate-y-1 md:active:translate-y-2">
-                刪除人員
+            <button onclick="deleteTrainer()" class="flex items-center justify-center gap-2 bg-rose-500 hover:bg-rose-600 text-white border-b-8 border-rose-800 p-4 rounded-2xl font-black text-lg transition-all active:border-b-0 active:translate-y-2">
+                ❌ 刪除資料
             </button>
         </div>
     </div>
 
-    <!-- 系統提示 -->
-    <div id="toast" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 pointer-events-none bg-slate-900 text-white px-6 md:px-10 py-4 md:py-6 border-2 md:border-4 border-yellow-400 rounded-lg shadow-2xl transition-all duration-300 z-50 font-bold text-center">
-        <div class="text-yellow-400 mb-1 md:mb-2 italic tracking-widest uppercase text-xs">圖鑑更新</div>
-        <div id="toast-text" class="text-sm md:text-base">儲存成功！</div>
+    <!-- 提示框 -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none bg-slate-900 text-white px-8 py-4 border-4 border-yellow-400 rounded-2xl shadow-2xl transition-all duration-300 z-50 font-bold">
+        <span id="toast-msg">已同步至雲端圖鑑</span>
     </div>
 
     <script>
-        const courses = ["", "國語", "英語", "數學", "生活", "社會", "自然", "藝術", "綜合", "健康", "體育", "彈性", "本土語", "資訊", "音樂", "藝美", "自定義"];
+        // --- 核心配置 ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'pokemon-timetable-v5';
+        const firebaseConfig = JSON.parse(__firebase_config);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        const COURSES = ["", "國語", "英語", "數學", "生活", "社會", "自然", "藝術", "綜合", "健康", "體育", "彈性", "本土語", "資訊", "音樂", "自定義"];
         
-        // 預設時間區間
-        const defaultPeriods = [
+        // 生成班級清單
+        const CLASSES = [""];
+        [3, 3, 3, 4, 3, 4].forEach((count, gradeIdx) => {
+            for (let i = 1; i <= count; i++) {
+                CLASSES.push(`${gradeIdx + 1}-${i}`);
+            }
+        });
+        CLASSES.push("自定義");
+
+        const DEFAULT_PERIODS = [
             { name: "晨", time: "08:00~08:25" },
             { name: "一", time: "08:30~09:10" },
             { name: "二", time: "09:20~10:00" },
@@ -209,220 +225,355 @@
             { name: "七", time: "15:20~16:00" }
         ];
 
-        let peopleList = JSON.parse(localStorage.getItem('poke_people_list')) || ["李宜昆"];
-        let currentPerson = localStorage.getItem('poke_current_person') || "李宜昆";
+        let state = {
+            user: null,
+            currentTrainer: localStorage.getItem('poke_last_trainer') || "李宜昆",
+            trainers: JSON.parse(localStorage.getItem('poke_trainer_list')) || ["李宜昆"]
+        };
 
-        function initTable() {
-            updatePersonSelector();
+        // --- 初始化 ---
+        window.onload = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await auth.signInWithCustomToken(__initial_auth_token);
+                } else {
+                    await auth.signInAnonymously();
+                }
+            } catch (err) {
+                console.error("Auth failed", err);
+            }
+
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    state.user = user;
+                    document.getElementById('display-id').innerText = user.uid.substring(0, 8);
+                    initApp();
+                }
+            });
+        };
+
+        async function initApp() {
+            renderTimetableSkeleton();
+            updateUISelectors();
+            await loadFromCloud();
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function renderTimetableSkeleton() {
             const tbody = document.getElementById('timetable-body');
-            tbody.innerHTML = ''; 
+            tbody.innerHTML = '';
 
-            defaultPeriods.forEach((p, pIdx) => {
+            DEFAULT_PERIODS.forEach((p, idx) => {
                 const tr = document.createElement('tr');
                 
-                // 時間列 - 設定為可編輯
+                // 時間格
                 const tdTime = document.createElement('td');
-                tdTime.id = `time-col-${pIdx}`;
-                tdTime.contentEditable = "true";
-                tdTime.className = 'time-edit p-1 md:p-2 border-r-2 md:border-r-4 border-b-2 md:border-b-4 border-slate-800 bg-slate-100 text-center overflow-hidden transition-all';
+                tdTime.className = "p-2 border-r-4 border-b-2 border-slate-800 bg-slate-50 text-center transition-colors hover:bg-yellow-50";
                 tdTime.innerHTML = `
-                    <div class="font-bold text-slate-800 text-[11px] md:text-sm">${p.name}</div>
-                    <div class="text-[8px] md:text-[10px] text-slate-500 font-bold">${p.time}</div>
+                    <div contenteditable="true" class="editable-field font-bold text-slate-800 text-sm time-name" data-idx="${idx}">${p.name}</div>
+                    <div contenteditable="true" class="editable-field text-[10px] text-slate-500 font-bold leading-tight time-range" data-idx="${idx}">${p.time || ''}</div>
                 `;
-                // 監聽修改後存檔
-                tdTime.onblur = () => saveData(true);
                 tr.appendChild(tdTime);
 
+                // 課程格 (1-5)
                 for (let d = 1; d <= 5; d++) {
                     const td = document.createElement('td');
-                    td.className = 'p-0.5 md:p-2 border-b-2 border-r-2 border-slate-100 text-center overflow-hidden';
+                    td.className = "p-1.5 border-b-2 border-r-2 border-slate-200 transition-all text-center";
                     
-                    const select = document.createElement('select');
-                    select.id = `cell-${pIdx}-${d}`;
-                    // 字體大小自適應，強制置中
-                    select.className = 'w-full h-10 md:h-14 bg-transparent text-center rounded-md md:rounded-lg cursor-pointer outline-none font-bold text-[11px] sm:text-xs md:text-lg transition-all appearance-none cell-hover shadow-inner';
+                    // 合併容器
+                    const container = document.createElement('div');
+                    container.id = `cell-box-${idx}-${d}`;
+                    container.className = "merged-cell-container rounded-xl shadow-sm";
+
+                    // 1. 課程選單
+                    const selCourse = document.createElement('select');
+                    selCourse.id = `course-${idx}-${d}`;
+                    selCourse.className = "w-full h-10 md:h-12 bg-transparent cursor-pointer font-black text-sm md:text-lg transition-all border-b border-black/10";
                     
-                    courses.forEach(c => {
+                    COURSES.forEach(c => {
                         const opt = document.createElement('option');
                         opt.value = c;
                         opt.text = c || "---";
-                        select.appendChild(opt);
+                        selCourse.appendChild(opt);
                     });
+                    selCourse.onchange = (e) => handleCourseSelect(selCourse, e.target.value, idx, d);
 
-                    select.onchange = (e) => handleCourseChange(select, e.target.value);
-                    td.appendChild(select);
+                    // 2. 班級選單
+                    const selClass = document.createElement('select');
+                    selClass.id = `class-${idx}-${d}`;
+                    selClass.className = "w-full h-7 md:h-9 bg-white/50 cursor-pointer font-bold text-[11px] md:text-sm text-slate-600 hover:bg-white/80";
+                    
+                    CLASSES.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c;
+                        opt.text = c || "班級";
+                        selClass.appendChild(opt);
+                    });
+                    selClass.onchange = (e) => handleClassSelect(selClass, e.target.value);
+
+                    container.appendChild(selCourse);
+                    container.appendChild(selClass);
+                    td.appendChild(container);
                     tr.appendChild(td);
                 }
                 tbody.appendChild(tr);
             });
-            loadData();
-        }
 
-        function updatePersonSelector() {
-            const selector = document.getElementById('person-selector');
-            selector.innerHTML = '';
-            peopleList.forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.text = name;
-                selector.appendChild(opt);
+            // 監聽時間編輯
+            document.querySelectorAll('.time-name, .time-range').forEach(el => {
+                el.onblur = () => saveAllToCloud(true);
             });
-            const addOpt = document.createElement('option');
-            addOpt.value = "__ADD_NEW__";
-            addOpt.text = "＋ 新增";
-            selector.appendChild(addOpt);
-            
-            selector.value = currentPerson;
-            document.getElementById('trainer-info').innerText = `Trainer: ${currentPerson} • Region: Er-Ling • Rank: Master`;
         }
 
-        function switchPerson() {
-            const selector = document.getElementById('person-selector');
-            const val = selector.value;
-            if (val === "__ADD_NEW__") {
-                const newName = prompt("發現新訓練家！請輸入名字：");
-                if (newName && !peopleList.includes(newName)) {
-                    peopleList.push(newName);
-                    localStorage.setItem('poke_people_list', JSON.stringify(peopleList));
-                    currentPerson = newName;
-                    localStorage.setItem('poke_current_person', currentPerson);
-                }
-                updatePersonSelector();
-                initTable();
-                return;
-            }
-            currentPerson = val;
-            localStorage.setItem('poke_current_person', currentPerson);
-            updatePersonSelector();
-            loadData();
-            showToast(`切換至 ${currentPerson}`);
-        }
-
-        function handleCourseChange(select, value) {
+        function handleCourseSelect(select, value, idx, d) {
             if (value === "自定義") {
-                const customVal = prompt("發現新招式！請輸入名稱：");
-                if (customVal) {
-                    const newOpt = document.createElement('option');
-                    newOpt.value = customVal;
-                    newOpt.text = customVal;
-                    select.add(newOpt);
-                    select.value = customVal;
+                const custom = prompt("請輸入自定義課程名稱：");
+                if (custom) {
+                    if (!COURSES.includes(custom)) {
+                        const opt = document.createElement('option');
+                        opt.value = custom;
+                        opt.text = custom;
+                        select.add(opt);
+                    }
+                    select.value = custom;
                 } else {
                     select.value = "";
                 }
             }
-            updateCellStyle(select);
-            saveData(true);
+            applyTypeStyle(select, idx, d);
+            saveAllToCloud(true);
         }
 
-        function updateCellStyle(select) {
-            const val = select.value;
-            select.className = 'w-full h-10 md:h-14 text-center rounded-md md:rounded-lg cursor-pointer outline-none font-bold text-[11px] sm:text-xs md:text-lg transition-all appearance-none cell-hover shadow-inner';
-            
-            if (val) {
-                const typeClass = `type-${val}`;
-                select.classList.add(typeClass);
-                if (!select.classList.contains(typeClass)) {
-                    select.style.backgroundColor = '#d1d5db';
-                    select.style.color = '#1f2937';
-                    select.style.border = '1px solid #9ca3af';
+        function handleClassSelect(select, value) {
+            if (value === "自定義") {
+                const custom = prompt("請輸入自定義班級名稱：");
+                if (custom) {
+                    const opt = document.createElement('option');
+                    opt.value = custom;
+                    opt.text = custom;
+                    select.add(opt);
+                    select.value = custom;
                 } else {
-                    select.style.backgroundColor = '';
-                    select.style.color = '';
-                    select.style.border = '';
+                    select.value = "";
                 }
+            }
+            saveAllToCloud(true);
+        }
+
+        function applyTypeStyle(select, idx, d) {
+            const val = select.value;
+            const container = document.getElementById(`cell-box-${idx}-${d}`);
+            if (!container) return;
+
+            // 清除之前的屬性類別
+            const allTypes = COURSES.map(c => `type-${c}`);
+            container.classList.remove(...allTypes, 'type-none');
+            container.style.backgroundColor = "";
+            container.style.color = "";
+
+            if (!val) {
+                container.classList.add('type-none');
+                select.style.color = "#94a3b8";
+                return;
+            }
+
+            const typeClass = `type-${val}`;
+            container.classList.add(typeClass);
+            
+            // 處理自定義顏色
+            const computedStyle = window.getComputedStyle(container);
+            if (computedStyle.backgroundColor === "rgba(0, 0, 0, 0)" || computedStyle.backgroundColor === "transparent") {
+                container.style.backgroundColor = "#e2e8f0";
+                select.style.color = "#1e293b";
             } else {
-                select.classList.add('type-none');
+                select.style.color = "inherit";
             }
         }
 
-        function saveData(silent = false) {
-            const data = {};
-            // 課程儲存
-            document.querySelectorAll('tbody select').forEach(s => {
-                data[s.id] = s.value;
+        function updateUISelectors() {
+            const sel = document.getElementById('user-selector');
+            sel.innerHTML = '';
+            
+            state.trainers.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.text = t;
+                sel.appendChild(opt);
             });
-            localStorage.setItem(`poke_data_${currentPerson}`, JSON.stringify(data));
-            
-            // 標題儲存
-            localStorage.setItem(`poke_global_title`, document.getElementById('main-title').innerText);
-            
-            // 自定義時間儲存
+
+            const addOpt = document.createElement('option');
+            addOpt.value = "_ADD_NEW_";
+            addOpt.text = "＋ 新增訓練家";
+            addOpt.className = "text-blue-600 font-bold bg-blue-50";
+            sel.appendChild(addOpt);
+
+            sel.value = state.currentTrainer;
+            document.getElementById('display-name').innerText = state.currentTrainer;
+        }
+
+        async function handleUserSwitch() {
+            const sel = document.getElementById('user-selector');
+            const val = sel.value;
+
+            if (val === "_ADD_NEW_") {
+                const name = prompt("發現新訓練家！請輸入名字：");
+                if (name && !state.trainers.includes(name)) {
+                    state.trainers.push(name);
+                    localStorage.setItem('poke_trainer_list', JSON.stringify(state.trainers));
+                    state.currentTrainer = name;
+                    localStorage.setItem('poke_last_trainer', name);
+                    updateUISelectors();
+                    resetTableUI();
+                    await saveAllToCloud();
+                    return;
+                } else {
+                    sel.value = state.currentTrainer;
+                    return;
+                }
+            }
+
+            state.currentTrainer = val;
+            localStorage.setItem('poke_last_trainer', val);
+            document.getElementById('loading').style.display = 'flex';
+            await loadFromCloud();
+            document.getElementById('loading').style.display = 'none';
+            showToast(`已切換至 ${val} 的圖鑑`);
+        }
+
+        function deleteTrainer() {
+            if (state.trainers.length <= 1) {
+                showToast("至少需要保留一名訓練家！");
+                return;
+            }
+            if (confirm(`確定要將訓練家 ${state.currentTrainer} 從名冊移除嗎？`)) {
+                state.trainers = state.trainers.filter(t => t !== state.currentTrainer);
+                localStorage.setItem('poke_trainer_list', JSON.stringify(state.trainers));
+                state.currentTrainer = state.trainers[0];
+                handleUserSwitch();
+            }
+        }
+
+        function resetTableUI() {
+            document.querySelectorAll('tbody select[id^="course"]').forEach(s => {
+                const parts = s.id.split('-');
+                s.value = "";
+                applyTypeStyle(s, parts[1], parts[2]);
+            });
+            document.querySelectorAll('tbody select[id^="class"]').forEach(s => {
+                s.value = "";
+            });
+        }
+
+        async function saveAllToCloud(silent = false) {
+            if (!state.user) return;
+
+            const courseData = {};
+            document.querySelectorAll('tbody select[id^="course"]').forEach(s => {
+                courseData[s.id] = s.value;
+            });
+
+            const classData = {};
+            document.querySelectorAll('tbody select[id^="class"]').forEach(s => {
+                classData[s.id] = s.value;
+            });
+
             const timeData = {};
-            document.querySelectorAll('.time-edit').forEach(td => {
-                timeData[td.id] = td.innerHTML;
+            document.querySelectorAll('.time-name, .time-range').forEach(el => {
+                const key = `${el.classList.contains('time-name') ? 'n' : 'r'}-${el.dataset.idx}`;
+                timeData[key] = el.innerText;
             });
-            localStorage.setItem(`poke_global_times`, JSON.stringify(timeData));
 
-            if (!silent) showToast("進度已儲存！");
+            const metaData = {
+                title: document.getElementById('main-title').innerText,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                const docPath = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('trainers').doc(state.currentTrainer);
+                await docPath.set({ courseData, classData, timeData, metaData });
+                if (!silent) showToast("雲端同步成功！");
+            } catch (err) {
+                console.error("Save error", err);
+                showToast("同步失敗，請檢查連線");
+            }
         }
 
-        function loadData() {
-            // 載入課程資料
-            const savedData = localStorage.getItem(`poke_data_${currentPerson}`);
-            const savedTitle = localStorage.getItem(`poke_global_title`);
-            const savedTimes = localStorage.getItem(`poke_global_times`);
+        async function loadFromCloud() {
+            if (!state.user) return;
 
-            if (savedTitle) document.getElementById('main-title').innerText = savedTitle;
-            
-            // 載入自定義時間
-            if (savedTimes) {
-                const timeData = JSON.parse(savedTimes);
-                for (const id in timeData) {
-                    const td = document.getElementById(id);
-                    if (td) td.innerHTML = timeData[id];
-                }
-            }
-
-            document.querySelectorAll('tbody select').forEach(select => {
-                select.value = "";
-                updateCellStyle(select);
-            });
-
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                for (const id in data) {
-                    const select = document.getElementById(id);
-                    if (select) {
-                        const val = data[id];
-                        if (val && !Array.from(select.options).some(opt => opt.value === val)) {
-                            const newOpt = document.createElement('option');
-                            newOpt.value = val;
-                            newOpt.text = val;
-                            select.add(newOpt);
-                        }
-                        select.value = val;
-                        updateCellStyle(select);
+            try {
+                const doc = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('trainers').doc(state.currentTrainer).get();
+                
+                if (doc.exists) {
+                    const data = doc.data();
+                    
+                    if (data.metaData) {
+                        document.getElementById('main-title').innerText = data.metaData.title || "二苓國小課表";
                     }
-                }
-            }
-        }
 
-        function deleteCurrentPerson() {
-            if (peopleList.length <= 1) return;
-            if (confirm(`確定要刪除 ${currentPerson} 嗎？`)) {
-                localStorage.removeItem(`poke_data_${currentPerson}`);
-                peopleList = peopleList.filter(p => p !== currentPerson);
-                localStorage.setItem('poke_people_list', JSON.stringify(peopleList));
-                currentPerson = peopleList[0];
-                localStorage.setItem('poke_current_person', currentPerson);
-                initTable();
+                    if (data.timeData) {
+                        Object.entries(data.timeData).forEach(([key, val]) => {
+                            const [type, idx] = key.split('-');
+                            const selector = type === 'n' ? '.time-name' : '.time-range';
+                            const el = document.querySelector(`${selector}[data-idx="${idx}"]`);
+                            if (el) el.innerText = val;
+                        });
+                    }
+
+                    resetTableUI();
+
+                    // 載入課程資料
+                    if (data.courseData) {
+                        Object.entries(data.courseData).forEach(([id, val]) => {
+                            const sel = document.getElementById(id);
+                            if (sel && val) {
+                                const parts = id.split('-');
+                                if (!Array.from(sel.options).some(o => o.value === val)) {
+                                    const o = document.createElement('option');
+                                    o.value = val; o.text = val; sel.add(o);
+                                }
+                                sel.value = val;
+                                applyTypeStyle(sel, parts[1], parts[2]);
+                            }
+                        });
+                    }
+
+                    // 載入班級資料
+                    if (data.classData) {
+                        Object.entries(data.classData).forEach(([id, val]) => {
+                            const sel = document.getElementById(id);
+                            if (sel && val) {
+                                if (!Array.from(sel.options).some(o => o.value === val)) {
+                                    const o = document.createElement('option');
+                                    o.value = val; o.text = val; sel.add(o);
+                                }
+                                sel.value = val;
+                            }
+                        });
+                    }
+                } else {
+                    resetTableUI();
+                }
+                document.getElementById('display-name').innerText = state.currentTrainer;
+            } catch (err) {
+                console.error("Load error", err);
             }
         }
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
-            document.getElementById('toast-text').innerText = msg;
-            toast.classList.remove('opacity-0', 'pointer-events-none');
-            toast.classList.add('opacity-100');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('opacity-0', 'translate-y-10');
+            toast.classList.add('opacity-100', 'translate-y-0');
             setTimeout(() => {
-                toast.classList.remove('opacity-100');
-                toast.classList.add('opacity-0', 'pointer-events-none');
-            }, 2000);
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-10');
+            }, 2500);
         }
 
-        document.getElementById('main-title').addEventListener('blur', () => saveData(true));
-        window.onload = initTable;
+        // 自動儲存監聽
+        document.getElementById('main-title').addEventListener('blur', () => saveAllToCloud(true));
+
     </script>
 </body>
 </html>
