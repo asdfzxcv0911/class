@@ -128,7 +128,7 @@
 
     <div id="loading" class="loading-overlay">
         <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-600"></div>
-        <p class="font-bold text-slate-600 animate-pulse">正在開啟訓練家圖鑑...</p>
+        <p class="font-bold text-slate-600 animate-pulse text-center">正在同步雲端圖鑑...<br><span class="text-xs font-normal">若讀取過久請重新整理</span></p>
     </div>
 
     <div class="max-w-6xl mx-auto">
@@ -197,27 +197,23 @@
     <script>
         // --- 核心配置 ---
         let db, auth;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'pokemon-timetable-v5';
-        const hasFirebaseConfig = typeof __firebase_config !== 'undefined';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'erling-pokemon-timetable-v6';
+        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
 
-        if (hasFirebaseConfig) {
+        if (firebaseConfigStr) {
             try {
-                const firebaseConfig = JSON.parse(__firebase_config);
+                const firebaseConfig = JSON.parse(firebaseConfigStr);
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
                 auth = firebase.auth();
-            } catch (e) {
-                console.error("Firebase Init Error", e);
-            }
+            } catch (e) { console.error("Firebase Init Fail", e); }
         }
 
         const COURSES = ["", "國語", "英語", "數學", "生活", "社會", "自然", "藝術", "綜合", "健康", "體育", "彈性", "本土語", "資訊", "音樂", "自定義"];
         
         const CLASSES = [""];
         [3, 3, 3, 4, 3, 4].forEach((count, gradeIdx) => {
-            for (let i = 1; i <= count; i++) {
-                CLASSES.push(`${gradeIdx + 1}-${i}`);
-            }
+            for (let i = 1; i <= count; i++) { CLASSES.push(`${gradeIdx + 1}-${i}`); }
         });
         CLASSES.push("自定義");
 
@@ -236,27 +232,23 @@
         let state = {
             user: null,
             currentTrainer: localStorage.getItem('poke_last_trainer') || "李宜昆",
-            trainers: JSON.parse(localStorage.getItem('poke_trainer_list')) || ["李宜昆"]
+            trainers: ["李宜昆"] // 初始預設，之後從雲端同步
         };
 
-        // --- 初始化流程 ---
+        // --- 初始化 ---
         window.onload = async () => {
-            setTimeout(hideLoading, 3000);
+            setTimeout(hideLoading, 4000); // 備用強制關閉
 
-            if (hasFirebaseConfig && auth) {
+            if (db && auth) {
                 try {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await auth.signInWithCustomToken(__initial_auth_token);
-                    } else {
-                        await auth.signInAnonymously();
-                    }
-                } catch (err) {
-                    console.error("Auth failed", err);
-                }
+                    const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                    if (token) { await auth.signInWithCustomToken(token); } 
+                    else { await auth.signInAnonymously(); }
+                } catch (err) { console.error("Auth failed", err); }
 
-                auth.onAuthStateChanged(user => {
+                auth.onAuthStateChanged(async (user) => {
                     state.user = user;
-                    initApp();
+                    await initApp();
                 });
             } else {
                 initApp();
@@ -270,8 +262,9 @@
 
         async function initApp() {
             renderTimetableSkeleton();
+            await syncTrainerListFromCloud(); // 從雲端讀取名單
             updateUISelectors();
-            await loadFromCloud();
+            await loadFromCloud(); // 讀取當前課表
             hideLoading();
         }
 
@@ -281,7 +274,6 @@
 
             DEFAULT_PERIODS.forEach((p, idx) => {
                 const tr = document.createElement('tr');
-                
                 const tdTime = document.createElement('td');
                 tdTime.className = "p-0.5 md:p-1 border-r-4 border-b-2 border-slate-800 bg-slate-50 text-center transition-colors hover:bg-yellow-50 w-[65px] sm:w-[75px]";
                 tdTime.innerHTML = `
@@ -293,7 +285,6 @@
                 for (let d = 1; d <= 5; d++) {
                     const td = document.createElement('td');
                     td.className = "p-1 border-b-2 border-r-2 border-slate-200 transition-all text-center";
-                    
                     const container = document.createElement('div');
                     container.id = `cell-box-${idx}-${d}`;
                     container.className = "merged-cell-container rounded-lg md:rounded-xl shadow-sm h-11 md:h-14";
@@ -301,22 +292,18 @@
                     const selCourse = document.createElement('select');
                     selCourse.id = `course-${idx}-${d}`;
                     selCourse.className = "w-full h-2/3 bg-transparent cursor-pointer font-black text-[10px] sm:text-sm md:text-lg transition-all border-b border-black/10 flex items-center justify-center";
-                    
                     COURSES.forEach(c => {
                         const opt = document.createElement('option');
-                        opt.value = c; opt.text = c || "---";
-                        selCourse.appendChild(opt);
+                        opt.value = c; opt.text = c || "---"; selCourse.appendChild(opt);
                     });
                     selCourse.onchange = (e) => handleCourseSelect(selCourse, e.target.value, idx, d);
 
                     const selClass = document.createElement('select');
                     selClass.id = `class-${idx}-${d}`;
                     selClass.className = "w-full h-1/3 bg-white/50 cursor-pointer font-bold text-[8px] sm:text-[10px] md:text-sm text-slate-600 hover:bg-white/80 flex items-center justify-center";
-                    
                     CLASSES.forEach(c => {
                         const opt = document.createElement('option');
-                        opt.value = c; opt.text = c || "班級";
-                        selClass.appendChild(opt);
+                        opt.value = c; opt.text = c || "班級"; selClass.appendChild(opt);
                     });
                     selClass.onchange = (e) => handleClassSelect(selClass, e.target.value);
 
@@ -333,80 +320,39 @@
             });
         }
 
-        function handleCourseSelect(select, value, idx, d) {
-            if (value === "自定義") {
-                const custom = prompt("請輸入自定義課程名稱：");
-                if (custom) {
-                    if (!COURSES.includes(custom)) {
-                        const opt = document.createElement('option');
-                        opt.value = custom; opt.text = custom; select.add(opt);
-                    }
-                    select.value = custom;
-                } else {
-                    select.value = "";
+        async function syncTrainerListFromCloud() {
+            if (!db || !state.user) return;
+            try {
+                // 從雲端公共路徑讀取名單
+                const listDoc = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('settings').doc('trainerList').get();
+                if (listDoc.exists) {
+                    state.trainers = listDoc.data().names || ["李宜昆"];
                 }
-            }
-            applyTypeStyle(select, idx, d);
-            saveAllToCloud(true);
+            } catch (e) { console.error("Sync Trainer List Fail", e); }
         }
 
-        function handleClassSelect(select, value) {
-            if (value === "自定義") {
-                const custom = prompt("請輸入自定義班級名稱：");
-                if (custom) {
-                    const opt = document.createElement('option');
-                    opt.value = custom; opt.text = custom; select.add(opt);
-                    select.value = custom;
-                } else {
-                    select.value = "";
-                }
-            }
-            saveAllToCloud(true);
-        }
-
-        function applyTypeStyle(select, idx, d) {
-            const val = select.value;
-            const container = document.getElementById(`cell-box-${idx}-${d}`);
-            if (!container) return;
-
-            const allTypes = COURSES.map(c => `type-${c}`);
-            container.classList.remove(...allTypes, 'type-none');
-            container.style.backgroundColor = "";
-
-            if (!val) {
-                container.classList.add('type-none');
-                select.style.color = "#94a3b8";
-                return;
-            }
-
-            const typeClass = `type-${val}`;
-            container.classList.add(typeClass);
-            
-            const computedStyle = window.getComputedStyle(container);
-            if (computedStyle.backgroundColor === "rgba(0, 0, 0, 0)" || computedStyle.backgroundColor === "transparent") {
-                container.style.backgroundColor = "#e2e8f0";
-                select.style.color = "#1e293b";
-            } else {
-                select.style.color = "inherit";
-            }
+        async function saveTrainerListToCloud() {
+            if (!db || !state.user) return;
+            try {
+                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('settings').doc('trainerList').set({
+                    names: state.trainers
+                });
+            } catch (e) { console.error("Save Trainer List Fail", e); }
         }
 
         function updateUISelectors() {
             const sel = document.getElementById('user-selector');
             if (!sel) return;
             sel.innerHTML = '';
-            
             state.trainers.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t; opt.text = t; sel.appendChild(opt);
             });
-
             const addOpt = document.createElement('option');
             addOpt.value = "_ADD_NEW_";
             addOpt.text = "＋ 新增訓練家";
             addOpt.className = "text-blue-600 font-bold bg-blue-50";
             sel.appendChild(addOpt);
-
             sel.value = state.currentTrainer;
         }
 
@@ -418,12 +364,12 @@
                 const name = prompt("發現新訓練家！請輸入名字：");
                 if (name && !state.trainers.includes(name)) {
                     state.trainers.push(name);
-                    localStorage.setItem('poke_trainer_list', JSON.stringify(state.trainers));
                     state.currentTrainer = name;
                     localStorage.setItem('poke_last_trainer', name);
+                    await saveTrainerListToCloud(); // 儲存名單到雲端
                     updateUISelectors();
                     resetTableUI();
-                    await saveAllToCloud();
+                    await saveAllToCloud(); // 初始儲存
                     return;
                 } else {
                     sel.value = state.currentTrainer;
@@ -433,21 +379,65 @@
 
             state.currentTrainer = val;
             localStorage.setItem('poke_last_trainer', val);
-            const loader = document.getElementById('loading');
-            if (loader) loader.style.display = 'flex';
+            document.getElementById('loading').style.display = 'flex';
             await loadFromCloud();
             hideLoading();
-            showToast(`已切換至 ${val} 的圖鑑`);
+            showToast(`已切換至 ${val} 的雲端課表`);
         }
 
-        function deleteTrainer() {
-            if (state.trainers.length <= 1) {
-                showToast("至少需要保留一名訓練家！");
+        function handleCourseSelect(select, value, idx, d) {
+            if (value === "自定義") {
+                const custom = prompt("請輸入課程名稱：");
+                if (custom) {
+                    if (!COURSES.includes(custom)) {
+                        const opt = document.createElement('option');
+                        opt.value = custom; opt.text = custom; select.add(opt);
+                    }
+                    select.value = custom;
+                } else { select.value = ""; }
+            }
+            applyTypeStyle(select, idx, d);
+            saveAllToCloud(true);
+        }
+
+        function handleClassSelect(select, value) {
+            if (value === "自定義") {
+                const custom = prompt("請輸入班級：");
+                if (custom) {
+                    const opt = document.createElement('option');
+                    opt.value = custom; opt.text = custom; select.add(opt);
+                    select.value = custom;
+                } else { select.value = ""; }
+            }
+            saveAllToCloud(true);
+        }
+
+        function applyTypeStyle(select, idx, d) {
+            const val = select.value;
+            const container = document.getElementById(`cell-box-${idx}-${d}`);
+            if (!container) return;
+            const allTypes = COURSES.map(c => `type-${c}`);
+            container.classList.remove(...allTypes, 'type-none');
+            container.style.backgroundColor = "";
+            if (!val) {
+                container.classList.add('type-none');
+                select.style.color = "#94a3b8";
                 return;
             }
-            if (confirm(`確定要將訓練家 ${state.currentTrainer} 從名冊移除嗎？`)) {
+            const typeClass = `type-${val}`;
+            container.classList.add(typeClass);
+            const computedStyle = window.getComputedStyle(container);
+            if (computedStyle.backgroundColor === "rgba(0, 0, 0, 0)" || computedStyle.backgroundColor === "transparent") {
+                container.style.backgroundColor = "#e2e8f0";
+                select.style.color = "#1e293b";
+            } else { select.style.color = "inherit"; }
+        }
+
+        async function deleteTrainer() {
+            if (state.trainers.length <= 1) { showToast("至少需保留一名訓練家"); return; }
+            if (confirm(`確定要將訓練家 ${state.currentTrainer} 從雲端移除嗎？`)) {
                 state.trainers = state.trainers.filter(t => t !== state.currentTrainer);
-                localStorage.setItem('poke_trainer_list', JSON.stringify(state.trainers));
+                await saveTrainerListToCloud(); // 更新雲端名單
                 state.currentTrainer = state.trainers[0];
                 handleUserSwitch();
             }
@@ -456,57 +446,44 @@
         function resetTableUI() {
             document.querySelectorAll('tbody select[id^="course"]').forEach(s => {
                 const parts = s.id.split('-');
-                s.value = "";
-                applyTypeStyle(s, parts[1], parts[2]);
+                s.value = ""; applyTypeStyle(s, parts[1], parts[2]);
             });
-            document.querySelectorAll('tbody select[id^="class"]').forEach(s => {
-                s.value = "";
-            });
+            document.querySelectorAll('tbody select[id^="class"]').forEach(s => s.value = "");
         }
 
         async function saveAllToCloud(silent = false) {
-            if (!state.user || !db) {
-                if (!silent) showToast("單機模式下僅暫存於瀏覽器");
-                return;
-            }
+            if (!state.user || !db) return;
 
             const courseData = {};
             document.querySelectorAll('tbody select[id^="course"]').forEach(s => courseData[s.id] = s.value);
-
             const classData = {};
             document.querySelectorAll('tbody select[id^="class"]').forEach(s => classData[s.id] = s.value);
-
             const timeData = {};
             document.querySelectorAll('.time-name, .time-range').forEach(el => {
                 const key = `${el.classList.contains('time-name') ? 'n' : 'r'}-${el.dataset.idx}`;
                 timeData[key] = el.innerText;
             });
 
-            const metaData = {
-                title: document.getElementById('main-title').innerText,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
             try {
                 const docPath = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('trainers').doc(state.currentTrainer);
-                await docPath.set({ courseData, classData, timeData, metaData });
+                await docPath.set({
+                    courseData, classData, timeData,
+                    metaData: { title: document.getElementById('main-title').innerText, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }
+                });
                 if (!silent) showToast("雲端同步成功！");
             } catch (err) {
-                console.error("Save error", err);
+                console.error("Save fail", err);
                 if (!silent) showToast("雲端儲存失敗");
             }
         }
 
         async function loadFromCloud() {
             if (!state.user || !db) return;
-
             try {
                 const doc = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('trainers').doc(state.currentTrainer).get();
-                
                 if (doc.exists) {
                     const data = doc.data();
                     if (data.metaData) document.getElementById('main-title').innerText = data.metaData.title || "二苓國小課表";
-
                     if (data.timeData) {
                         Object.entries(data.timeData).forEach(([key, val]) => {
                             const [type, idx] = key.split('-');
@@ -515,19 +492,15 @@
                             if (el) el.innerText = val;
                         });
                     }
-
                     resetTableUI();
                     if (data.courseData) {
                         Object.entries(data.courseData).forEach(([id, val]) => {
                             const sel = document.getElementById(id);
                             if (sel && val) {
-                                const parts = id.split('-');
                                 if (!Array.from(sel.options).some(o => o.value === val)) {
-                                    const o = document.createElement('option');
-                                    o.value = val; o.text = val; sel.add(o);
+                                    const o = document.createElement('option'); o.value = val; o.text = val; sel.add(o);
                                 }
-                                sel.value = val;
-                                applyTypeStyle(sel, parts[1], parts[2]);
+                                sel.value = val; applyTypeStyle(sel, id.split('-')[1], id.split('-')[2]);
                             }
                         });
                     }
@@ -536,19 +509,14 @@
                             const sel = document.getElementById(id);
                             if (sel && val) {
                                 if (!Array.from(sel.options).some(o => o.value === val)) {
-                                    const o = document.createElement('option');
-                                    o.value = val; o.text = val; sel.add(o);
+                                    const o = document.createElement('option'); o.value = val; o.text = val; sel.add(o);
                                 }
                                 sel.value = val;
                             }
                         });
                     }
-                } else {
-                    resetTableUI();
-                }
-            } catch (err) {
-                console.error("Load error", err);
-            }
+                } else { resetTableUI(); }
+            } catch (err) { console.error("Load fail", err); }
         }
 
         function showToast(msg) {
@@ -563,7 +531,6 @@
         }
 
         document.getElementById('main-title').addEventListener('blur', () => saveAllToCloud(true));
-
     </script>
 </body>
 </html>
