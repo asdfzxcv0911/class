@@ -134,25 +134,26 @@
     <div class="max-w-6xl mx-auto">
         <!-- 頂部導航與標題 -->
         <div class="game-card rounded-3xl overflow-hidden bg-white mb-6">
-            <header class="poke-header p-6 flex flex-col items-center relative">
-                <div class="pokeball-center mb-6 shadow-lg animate-bounce"></div>
+            <header class="poke-header p-4 md:p-6 flex flex-col items-center relative">
+                <div class="pokeball-center mb-4 md:mb-6 shadow-lg animate-bounce"></div>
                 
-                <h1 id="main-title" contenteditable="true" spellcheck="false" class="editable-field text-2xl md:text-5xl font-black text-slate-800 bg-white/95 px-10 py-4 rounded-full border-4 border-slate-800 transition-all z-10 mb-6 text-center shadow-sm">
+                <!-- 標題優化：手機版 text-lg 確保一行呈現 -->
+                <h1 id="main-title" contenteditable="true" spellcheck="false" class="editable-field text-lg sm:text-2xl md:text-5xl font-black text-slate-800 bg-white/95 px-4 sm:px-10 py-3 md:py-4 rounded-full border-4 border-slate-800 transition-all z-10 mb-4 md:mb-6 text-center shadow-sm whitespace-nowrap overflow-hidden">
                     二苓國小 114 學年度課表
                 </h1>
 
-                <div class="no-print flex flex-wrap justify-center gap-3 bg-white/90 p-3 rounded-2xl border-2 border-slate-800 shadow-sm">
-                    <div class="flex items-center gap-3 px-4">
-                        <span class="font-bold text-slate-700">當前訓練家:</span>
+                <div class="no-print flex flex-wrap justify-center gap-2 md:gap-3 bg-white/90 p-2 md:p-3 rounded-2xl border-2 border-slate-800 shadow-sm">
+                    <div class="flex items-center gap-2 md:gap-3 px-2 md:px-4">
+                        <span class="font-bold text-slate-700 text-xs md:text-base">當前訓練家:</span>
                         <div class="relative">
-                            <select id="user-selector" onchange="handleUserSwitch()" class="bg-white border-2 border-slate-800 rounded-lg pl-4 pr-10 py-1.5 font-bold outline-none cursor-pointer hover:bg-slate-50 transition-colors">
+                            <select id="user-selector" onchange="handleUserSwitch()" class="bg-white border-2 border-slate-800 rounded-lg pl-3 pr-8 md:pl-4 md:pr-10 py-1 font-bold outline-none cursor-pointer hover:bg-slate-50 transition-colors text-xs md:text-base">
                             </select>
-                            <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[10px]">▼</div>
+                            <div class="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[8px] md:text-[10px]">▼</div>
                         </div>
                     </div>
                 </div>
             </header>
-            <div id="status-bar" class="bg-slate-900 text-yellow-400 py-2 text-center text-xs md:text-sm font-bold tracking-[0.2em] uppercase">
+            <div id="status-bar" class="bg-slate-900 text-yellow-400 py-2 text-center text-[10px] md:text-sm font-bold tracking-[0.1em] md:tracking-[0.2em] uppercase">
                 Trainer: <span id="display-name">---</span> • Region: Siaogang • Rank: Master • ID: <span id="display-id">LOCAL</span>
             </div>
         </div>
@@ -160,15 +161,15 @@
         <!-- 課表主體 -->
         <div class="game-card rounded-2xl bg-white overflow-hidden mb-6 shadow-xl">
             <div class="overflow-x-auto">
-                <table class="w-full border-collapse table-fixed">
+                <table class="w-full border-collapse table-fixed min-w-[320px]">
                     <thead>
                         <tr class="bg-blue-600 text-white">
-                            <th class="p-2 border-r-4 border-b-4 border-slate-800 w-[75px] bg-blue-700 font-bold italic text-sm">節次</th>
-                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg w-auto">週一</th>
-                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg w-auto">週二</th>
-                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg w-auto">週三</th>
-                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg w-auto">週四</th>
-                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg w-auto">週五</th>
+                            <th class="p-1 border-r-4 border-b-4 border-slate-800 w-[65px] sm:w-[75px] bg-blue-700 font-bold italic text-[10px] sm:text-sm">節次</th>
+                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-black text-xs sm:text-lg w-auto">週一</th>
+                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-black text-xs sm:text-lg w-auto">週二</th>
+                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-black text-xs sm:text-lg w-auto">週三</th>
+                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-black text-xs sm:text-lg w-auto">週四</th>
+                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-black text-xs sm:text-lg w-auto">週五</th>
                         </tr>
                     </thead>
                     <tbody id="timetable-body">
@@ -178,22 +179,22 @@
             </div>
         </div>
 
-        <!-- 控制按鈕 -->
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 no-print pb-12">
-            <button onclick="saveAllToCloud()" class="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white border-b-8 border-emerald-800 p-4 rounded-2xl font-black text-lg transition-all active:border-b-0 active:translate-y-2">
-                💾 雲端儲存
+        <!-- 按鈕區優化：手機版 grid-cols-3 確保一行顯示 -->
+        <div class="grid grid-cols-3 gap-2 md:gap-4 no-print pb-12">
+            <button onclick="saveAllToCloud()" class="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 bg-emerald-500 hover:bg-emerald-600 text-white border-b-4 md:border-b-8 border-emerald-800 p-2 md:p-4 rounded-xl md:rounded-2xl font-black text-[10px] sm:text-sm md:text-lg transition-all active:border-b-0 active:translate-y-1 md:active:translate-y-2">
+                <span>💾</span><span class="whitespace-nowrap">雲端儲存</span>
             </button>
-            <button onclick="window.print()" class="flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-slate-900 border-b-8 border-amber-700 p-4 rounded-2xl font-black text-lg transition-all active:border-b-0 active:translate-y-2">
-                🖨️ 列印導出
+            <button onclick="window.print()" class="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 bg-amber-400 hover:bg-amber-500 text-slate-900 border-b-4 md:border-b-8 border-amber-700 p-2 md:p-4 rounded-xl md:rounded-2xl font-black text-[10px] sm:text-sm md:text-lg transition-all active:border-b-0 active:translate-y-1 md:active:translate-y-2">
+                <span>🖨️</span><span class="whitespace-nowrap">列印導出</span>
             </button>
-            <button onclick="deleteTrainer()" class="flex items-center justify-center gap-2 bg-rose-500 hover:bg-rose-600 text-white border-b-8 border-rose-800 p-4 rounded-2xl font-black text-lg transition-all active:border-b-0 active:translate-y-2">
-                ❌ 刪除資料
+            <button onclick="deleteTrainer()" class="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 bg-rose-500 hover:bg-rose-600 text-white border-b-4 md:border-b-8 border-rose-800 p-2 md:p-4 rounded-xl md:rounded-2xl font-black text-[10px] sm:text-sm md:text-lg transition-all active:border-b-0 active:translate-y-1 md:active:translate-y-2">
+                <span>❌</span><span class="whitespace-nowrap">刪除資料</span>
             </button>
         </div>
     </div>
 
     <!-- 提示框 -->
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none bg-slate-900 text-white px-8 py-4 border-4 border-yellow-400 rounded-2xl shadow-2xl transition-all duration-300 z-50 font-bold">
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none bg-slate-900 text-white px-6 md:px-8 py-3 md:py-4 border-4 border-yellow-400 rounded-2xl shadow-2xl transition-all duration-300 z-50 font-bold">
         <span id="toast-msg">已同步至雲端圖鑑</span>
     </div>
 
@@ -287,10 +288,10 @@
                 const tr = document.createElement('tr');
                 
                 const tdTime = document.createElement('td');
-                tdTime.className = "p-1 border-r-4 border-b-2 border-slate-800 bg-slate-50 text-center transition-colors hover:bg-yellow-50 w-[75px]";
+                tdTime.className = "p-0.5 md:p-1 border-r-4 border-b-2 border-slate-800 bg-slate-50 text-center transition-colors hover:bg-yellow-50 w-[65px] sm:w-[75px]";
                 tdTime.innerHTML = `
-                    <div contenteditable="true" class="editable-field font-bold text-slate-800 text-sm time-name" data-idx="${idx}">${p.name}</div>
-                    <div contenteditable="true" class="editable-field text-[9px] md:text-[10px] text-slate-500 font-bold leading-tight time-range whitespace-nowrap" data-idx="${idx}">${p.time || ''}</div>
+                    <div contenteditable="true" class="editable-field font-bold text-slate-800 text-[10px] sm:text-sm time-name" data-idx="${idx}">${p.name}</div>
+                    <div contenteditable="true" class="editable-field text-[8px] sm:text-[10px] text-slate-500 font-bold leading-tight time-range whitespace-nowrap" data-idx="${idx}">${p.time || ''}</div>
                 `;
                 tr.appendChild(tdTime);
 
@@ -300,13 +301,11 @@
                     
                     const container = document.createElement('div');
                     container.id = `cell-box-${idx}-${d}`;
-                    // 縮小整體高度比例
-                    container.className = "merged-cell-container rounded-xl shadow-sm h-12 md:h-14";
+                    container.className = "merged-cell-container rounded-lg md:rounded-xl shadow-sm h-11 md:h-14";
 
                     const selCourse = document.createElement('select');
                     selCourse.id = `course-${idx}-${d}`;
-                    // 佔據 2/3 高度
-                    selCourse.className = "w-full h-2/3 bg-transparent cursor-pointer font-black text-sm md:text-lg transition-all border-b border-black/10 flex items-center justify-center";
+                    selCourse.className = "w-full h-2/3 bg-transparent cursor-pointer font-black text-[10px] sm:text-sm md:text-lg transition-all border-b border-black/10 flex items-center justify-center";
                     
                     COURSES.forEach(c => {
                         const opt = document.createElement('option');
@@ -317,8 +316,7 @@
 
                     const selClass = document.createElement('select');
                     selClass.id = `class-${idx}-${d}`;
-                    // 佔據 1/3 高度
-                    selClass.className = "w-full h-1/3 bg-white/50 cursor-pointer font-bold text-[9px] md:text-xs text-slate-600 hover:bg-white/80 flex items-center justify-center";
+                    selClass.className = "w-full h-1/3 bg-white/50 cursor-pointer font-bold text-[8px] sm:text-[10px] md:text-sm text-slate-600 hover:bg-white/80 flex items-center justify-center";
                     
                     CLASSES.forEach(c => {
                         const opt = document.createElement('option');
