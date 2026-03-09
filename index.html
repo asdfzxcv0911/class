@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二苓國小114學年度寶可夢課表</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 設定全域字體為標楷體 */
+        body {
+            font-family: "DFKai-SB", "BiauKai", "標楷體", "KaiTi", serif;
+            background-color: #f6f8fc;
+            background-image: 
+                radial-gradient(var(--poke-yellow) 0.5px, transparent 0.5px),
+                radial-gradient(var(--poke-yellow) 0.5px, #f6f8fc 0.5px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+
+        :root {
+            --poke-red: #ee1515;
+            --poke-white: #ffffff;
+            --poke-black: #222222;
+            --poke-yellow: #ffcb05;
+            --poke-blue: #2a75bb;
+        }
+
+        /* 寶可夢屬性配色系統 */
+        .type-none { background-color: #f1f5f9 !important; color: #94a3b8 !important; border: 2px solid #e2e8f0 !important; }
+        .type-國語 { background-color: #ff4422 !important; color: white !important; border: 2px solid #b22d14 !important; }
+        .type-英語 { background-color: #3399ff !important; color: white !important; border: 2px solid #2266aa !important; }
+        .type-數學 { background-color: #ffcc33 !important; color: #443300 !important; border: 2px solid #bba100 !important; }
+        .type-生活 { background-color: #77cc55 !important; color: white !important; border: 2px solid #4d8c34 !important; }
+        .type-自然 { background-color: #7ac852 !important; color: white !important; border: 2px solid #4a8031 !important; }
+        .type-社會 { background-color: #b8a038 !important; color: white !important; border: 2px solid #786824 !important; }
+        .type-藝術 { background-color: #ee99ee !important; color: white !important; border: 2px solid #aa66aa !important; }
+        .type-綜合 { background-color: #a8a878 !important; color: white !important; border: 2px solid #6d6d4e !important; }
+        .type-健康 { background-color: #ffb7d5 !important; color: #a04070 !important; border: 2px solid #d880a0 !important; }
+        .type-體育 { background-color: #ff8000 !important; color: white !important; border: 2px solid #b05800 !important; }
+        .type-彈性 { background-color: #a890f0 !important; color: white !important; border: 2px solid #6d5da1 !important; }
+        .type-資訊 { background-color: #b8b8d0 !important; color: #334144 !important; border: 2px solid #707080 !important; }
+        .type-音樂 { background-color: #6890f0 !important; color: white !important; border: 2px solid #445e9c !important; }
+        .type-藝美 { background-color: #f85888 !important; color: white !important; border: 2px solid #a13959 !important; }
+        .type-本土語 { background-color: #e0c068 !important; color: white !important; border: 2px solid #8e7a42 !important; }
+
+        .game-card {
+            border: 6px solid var(--poke-black);
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.1);
+        }
+
+        .poke-header {
+            background: linear-gradient(180deg, var(--poke-red) 48%, var(--poke-black) 48%, var(--poke-black) 52%, var(--poke-white) 52%);
+            border-bottom: 6px solid var(--poke-black);
+        }
+
+        .pokeball-icon {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border: 6px solid var(--poke-black);
+            border-radius: 50%;
+            position: relative;
+        }
+        .pokeball-icon::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 15px; height: 15px;
+            background: white;
+            border: 4px solid var(--poke-black);
+            border-radius: 50%;
+        }
+
+        .cell-hover:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+            cursor: pointer;
+        }
+
+        .trainer-select {
+            background: white;
+            border: 4px solid var(--poke-black);
+            padding: 5px 15px;
+            font-weight: bold;
+            border-radius: 10px;
+            color: var(--poke-black);
+        }
+
+        /* 強制標楷體在特定元素上的表現 */
+        input, select, button, textarea {
+            font-family: inherit;
+        }
+
+        #main-title:focus {
+            background-color: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 0 4px var(--poke-blue);
+            outline: none;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { 
+                background: white !important; 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+            }
+            .game-card { border-width: 2px; box-shadow: none; }
+            select { 
+                appearance: none !important; 
+                -webkit-appearance: none !important; 
+                border: none !important; 
+                color: black !important; 
+                background: transparent !important; 
+                font-size: 1.2rem !important;
+            }
+            #main-title { border: none !important; background: transparent !important; box-shadow: none !important; }
+            .pokeball-icon { border-width: 3px; }
+            .pokeball-icon::after { border-width: 2px; }
+            header { padding: 1rem !important; }
+        }
+
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: var(--poke-blue); border: 2px solid white; border-radius: 5px; }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- 頂部精靈球標題區 -->
+        <div class="game-card rounded-3xl overflow-hidden bg-white mb-8">
+            <header class="poke-header p-8 flex flex-col items-center justify-center relative">
+                <div class="pokeball-icon mb-4 animate-bounce no-print"></div>
+                <!-- 這裡開啟 contenteditable，讓老師可以直接修改標題 -->
+                <h1 id="main-title" contenteditable="true" class="text-3xl md:text-5xl font-bold text-center text-slate-800 drop-shadow-sm bg-white/90 px-8 py-3 rounded-full border-4 border-slate-800 mb-4 transition-all">
+                    二苓國小 114 學年度課表
+                </h1>
+                
+                <!-- 訓練家切換選單 -->
+                <div class="no-print flex items-center gap-3 bg-white/80 p-2 rounded-xl border-2 border-slate-800">
+                    <span class="font-bold text-slate-700">訓練家切換:</span>
+                    <select id="person-selector" class="trainer-select outline-none cursor-pointer" onchange="switchPerson()">
+                        <!-- 動態生成選項 -->
+                    </select>
+                </div>
+            </header>
+            <div id="trainer-info" class="p-3 bg-slate-800 text-yellow-400 text-center font-bold tracking-widest text-sm uppercase">
+                Trainer: 李宜昆 • Region: Er-Ling • Rank: Master
+            </div>
+        </div>
+
+        <!-- 課表地圖區 -->
+        <div class="game-card rounded-2xl bg-white overflow-hidden mb-8">
+            <div class="overflow-x-auto">
+                <table class="w-full border-separate border-spacing-0">
+                    <thead>
+                        <tr class="bg-blue-600 text-white">
+                            <th class="p-4 border-r-4 border-b-4 border-slate-800 w-32 bg-blue-700 font-bold italic">節次</th>
+                            <th class="p-4 border-b-4 border-slate-800 font-bold italic tracking-widest">週一</th>
+                            <th class="p-4 border-b-4 border-slate-800 font-bold italic tracking-widest">週二</th>
+                            <th class="p-4 border-b-4 border-slate-800 font-bold italic tracking-widest">週三</th>
+                            <th class="p-4 border-b-4 border-slate-800 font-bold italic tracking-widest">週四</th>
+                            <th class="p-4 border-b-4 border-slate-800 font-bold italic tracking-widest">週五</th>
+                        </tr>
+                    </thead>
+                    <tbody id="timetable-body">
+                        <!-- 由 JS 生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 冒險選單按鈕區 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 no-print max-w-4xl mx-auto">
+            <button onclick="saveData()" class="flex items-center justify-center gap-3 bg-blue-500 hover:bg-blue-600 text-white border-b-8 border-blue-800 p-4 rounded-xl font-bold text-xl transition-all active:border-b-0 active:translate-y-2">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V4a1 1 0 10-2 0v7.586l-1.293-1.293z"></path></svg>
+                儲存進度
+            </button>
+            
+            <button onclick="window.print()" class="flex items-center justify-center gap-3 bg-yellow-400 hover:bg-yellow-500 text-slate-800 border-b-8 border-yellow-700 p-4 rounded-xl font-bold text-xl transition-all active:border-b-0 active:translate-y-2">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm10 4h-4a1 1 0 100 2h4a1 1 0 100-2zm-4 4h-4a1 1 0 100 2h4a1 1 0 100-2z"></path></svg>
+                列印課表
+            </button>
+
+            <button onclick="deleteCurrentPerson()" class="flex items-center justify-center gap-3 bg-red-500 hover:bg-red-600 text-white border-b-8 border-red-800 p-4 rounded-xl font-bold text-xl transition-all active:border-b-0 active:translate-y-2">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"></path></svg>
+                刪除人員
+            </button>
+        </div>
+    </div>
+
+    <!-- 系統提示 -->
+    <div id="toast" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 pointer-events-none bg-slate-900 text-white px-10 py-6 border-4 border-yellow-400 rounded-lg shadow-2xl transition-all duration-300 z-50 font-bold text-center">
+        <div class="text-yellow-400 mb-2 italic tracking-widest uppercase">圖鑑更新</div>
+        <div id="toast-text">遊戲進度已儲存！</div>
+    </div>
+
+    <script>
+        const courses = ["", "國語", "英語", "數學", "生活", "社會", "自然", "藝術", "綜合", "健康", "體育", "彈性", "本土語", "資訊", "音樂", "藝美", "自定義"];
+        const periods = [
+            { name: "晨間", time: "08:00" },
+            { name: "第一節", time: "08:40" },
+            { name: "第二節", time: "09:30" },
+            { name: "第三節", time: "10:30" },
+            { name: "第四節", time: "11:20" },
+            { name: "午休", time: "12:00" },
+            { name: "第五節", time: "13:30" },
+            { name: "第六節", time: "14:20" },
+            { name: "第七節", time: "15:10" }
+        ];
+
+        let peopleList = JSON.parse(localStorage.getItem('poke_people_list')) || ["李宜昆"];
+        let currentPerson = localStorage.getItem('poke_current_person') || "李宜昆";
+
+        function initTable() {
+            updatePersonSelector();
+            const tbody = document.getElementById('timetable-body');
+            tbody.innerHTML = ''; 
+
+            periods.forEach((p, pIdx) => {
+                const tr = document.createElement('tr');
+                
+                const tdTime = document.createElement('td');
+                tdTime.className = 'p-3 border-r-4 border-b-4 border-slate-800 bg-slate-100 text-center';
+                tdTime.innerHTML = `
+                    <div class="font-bold text-slate-800 text-sm">${p.name}</div>
+                    <div class="text-[10px] text-slate-500 font-bold">${p.time}</div>
+                `;
+                tr.appendChild(tdTime);
+
+                for (let d = 1; d <= 5; d++) {
+                    const td = document.createElement('td');
+                    td.className = 'p-2 border-b-4 border-r-2 border-slate-100 text-center';
+                    
+                    const select = document.createElement('select');
+                    select.id = `cell-${pIdx}-${d}`;
+                    select.className = 'w-full h-14 bg-transparent text-center rounded-lg cursor-pointer outline-none font-bold text-lg transition-all appearance-none cell-hover';
+                    
+                    courses.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c;
+                        opt.text = c || "---";
+                        select.appendChild(opt);
+                    });
+
+                    select.onchange = (e) => handleCourseChange(select, e.target.value);
+                    td.appendChild(select);
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            });
+            loadData();
+        }
+
+        function updatePersonSelector() {
+            const selector = document.getElementById('person-selector');
+            selector.innerHTML = '';
+            peopleList.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.text = name;
+                selector.appendChild(opt);
+            });
+            const addOpt = document.createElement('option');
+            addOpt.value = "__ADD_NEW__";
+            addOpt.text = "＋ 新增訓練家";
+            selector.appendChild(addOpt);
+            
+            selector.value = currentPerson;
+            document.getElementById('trainer-info').innerText = `Trainer: ${currentPerson} • Region: Er-Ling • Rank: Master`;
+        }
+
+        function switchPerson() {
+            const selector = document.getElementById('person-selector');
+            const val = selector.value;
+
+            if (val === "__ADD_NEW__") {
+                const newName = prompt("發現新訓練家！請輸入名字：");
+                if (newName && !peopleList.includes(newName)) {
+                    peopleList.push(newName);
+                    localStorage.setItem('poke_people_list', JSON.stringify(peopleList));
+                    currentPerson = newName;
+                    localStorage.setItem('poke_current_person', currentPerson);
+                }
+                updatePersonSelector();
+                initTable();
+                return;
+            }
+
+            currentPerson = val;
+            localStorage.setItem('poke_current_person', currentPerson);
+            updatePersonSelector();
+            loadData();
+            showToast(`切換至 ${currentPerson} 的課表`);
+        }
+
+        function handleCourseChange(select, value) {
+            if (value === "自定義") {
+                const customVal = prompt("發現新招式！請輸入名稱：");
+                if (customVal) {
+                    const newOpt = document.createElement('option');
+                    newOpt.value = customVal;
+                    newOpt.text = customVal;
+                    select.add(newOpt);
+                    select.value = customVal;
+                } else {
+                    select.value = "";
+                }
+            }
+            updateCellStyle(select);
+            saveData(true);
+        }
+
+        function updateCellStyle(select) {
+            const val = select.value;
+            select.className = 'w-full h-14 text-center rounded-lg cursor-pointer outline-none font-bold text-lg transition-all appearance-none cell-hover shadow-inner';
+            
+            if (val) {
+                const typeClass = `type-${val}`;
+                select.classList.add(typeClass);
+                if (!select.classList.contains(typeClass)) {
+                    select.style.backgroundColor = '#d1d5db';
+                    select.style.color = '#1f2937';
+                    select.style.border = '2px solid #9ca3af';
+                } else {
+                    select.style.backgroundColor = '';
+                    select.style.color = '';
+                    select.style.border = '';
+                }
+            } else {
+                select.classList.add('type-none');
+            }
+        }
+
+        function saveData(silent = false) {
+            const data = {};
+            document.querySelectorAll('tbody select').forEach(s => {
+                data[s.id] = s.value;
+            });
+            // 儲存當前人員的課程資料
+            localStorage.setItem(`poke_data_${currentPerson}`, JSON.stringify(data));
+            // 儲存全域標題
+            localStorage.setItem(`poke_global_title`, document.getElementById('main-title').innerText);
+            
+            if (!silent) {
+                showToast("資料已記錄在冒險日誌中！");
+            }
+        }
+
+        function loadData() {
+            const savedData = localStorage.getItem(`poke_data_${currentPerson}`);
+            const savedTitle = localStorage.getItem(`poke_global_title`);
+            
+            // 載入標題
+            if (savedTitle) {
+                document.getElementById('main-title').innerText = savedTitle;
+            }
+
+            document.querySelectorAll('tbody select').forEach(select => {
+                select.value = "";
+                updateCellStyle(select);
+            });
+
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                for (const id in data) {
+                    const select = document.getElementById(id);
+                    if (select) {
+                        const val = data[id];
+                        if (val && !Array.from(select.options).some(opt => opt.value === val)) {
+                            const newOpt = document.createElement('option');
+                            newOpt.value = val;
+                            newOpt.text = val;
+                            select.add(newOpt);
+                        }
+                        select.value = val;
+                        updateCellStyle(select);
+                    }
+                }
+            }
+        }
+
+        function deleteCurrentPerson() {
+            if (peopleList.length <= 1) {
+                alert("至少需要保留一位訓練家！");
+                return;
+            }
+            if (confirm(`要將 ${currentPerson} 傳送回大木博士那裡嗎？(刪除資料)`)) {
+                localStorage.removeItem(`poke_data_${currentPerson}`);
+                peopleList = peopleList.filter(p => p !== currentPerson);
+                localStorage.setItem('poke_people_list', JSON.stringify(peopleList));
+                currentPerson = peopleList[0];
+                localStorage.setItem('poke_current_person', currentPerson);
+                initTable();
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-text').innerText = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2000);
+        }
+
+        // 監聽標題編輯完成後自動儲存
+        document.getElementById('main-title').addEventListener('blur', () => saveData(true));
+
+        window.onload = initTable;
+    </script>
+</body>
+</html>
