@@ -27,7 +27,6 @@
             --poke-blue: #2a75bb;
         }
 
-        /* 屬性配色系統 */
         .type-none { background-color: #f1f5f9 !important; color: #94a3b8 !important; }
         .type-國語 { background-color: #ff4422 !important; color: white !important; }
         .type-英語 { background-color: #3399ff !important; color: white !important; }
@@ -114,21 +113,21 @@
         .loading-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 100;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
         }
     </style>
 </head>
 <body class="p-2 md:p-8 min-h-screen text-slate-800">
 
     <div id="loading" class="loading-overlay">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-600"></div>
-        <p class="font-bold text-slate-600 animate-pulse text-center">正在同步雲端圖鑑...<br><span class="text-xs font-normal">若讀取過久請重新整理</span></p>
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
+        <p id="loading-text" class="font-bold text-slate-700 animate-pulse text-center text-lg">正在同步雲端圖鑑...<br><span class="text-xs font-normal">初次載入或網路較慢時請稍候</span></p>
     </div>
 
     <div class="max-w-6xl mx-auto">
@@ -195,9 +194,9 @@
     </div>
 
     <script>
-        // --- 核心配置 ---
+        // --- Firebase 核心配置 ---
         let db, auth;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'erling-pokemon-timetable-v6';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'erling-pokemon-v7';
         const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
 
         if (firebaseConfigStr) {
@@ -210,7 +209,6 @@
         }
 
         const COURSES = ["", "國語", "英語", "數學", "生活", "社會", "自然", "藝術", "綜合", "健康", "體育", "彈性", "本土語", "資訊", "音樂", "自定義"];
-        
         const CLASSES = [""];
         [3, 3, 3, 4, 3, 4].forEach((count, gradeIdx) => {
             for (let i = 1; i <= count; i++) { CLASSES.push(`${gradeIdx + 1}-${i}`); }
@@ -232,23 +230,25 @@
         let state = {
             user: null,
             currentTrainer: localStorage.getItem('poke_last_trainer') || "李宜昆",
-            trainers: ["李宜昆"] // 初始預設，之後從雲端同步
+            trainers: ["李宜昆"] 
         };
 
-        // --- 初始化 ---
+        // --- 初始化流程 ---
         window.onload = async () => {
-            setTimeout(hideLoading, 4000); // 備用強制關閉
+            setTimeout(hideLoading, 5000); // 逾時安全閥
 
             if (db && auth) {
                 try {
                     const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
                     if (token) { await auth.signInWithCustomToken(token); } 
                     else { await auth.signInAnonymously(); }
-                } catch (err) { console.error("Auth failed", err); }
+                } catch (err) { console.error("Auth Error", err); }
 
                 auth.onAuthStateChanged(async (user) => {
-                    state.user = user;
-                    await initApp();
+                    if (user) {
+                        state.user = user;
+                        await initApp();
+                    }
                 });
             } else {
                 initApp();
@@ -262,9 +262,9 @@
 
         async function initApp() {
             renderTimetableSkeleton();
-            await syncTrainerListFromCloud(); // 從雲端讀取名單
+            await syncTrainerList(); // 同步名單
             updateUISelectors();
-            await loadFromCloud(); // 讀取當前課表
+            await loadFromCloud(); // 同步課表
             hideLoading();
         }
 
@@ -320,24 +320,24 @@
             });
         }
 
-        async function syncTrainerListFromCloud() {
+        // --- 雲端名單管理 (符合 Rule 1) ---
+        async function syncTrainerList() {
             if (!db || !state.user) return;
+            const path = `artifacts/${appId}/public/data/globalSettings`;
             try {
-                // 從雲端公共路徑讀取名單
-                const listDoc = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('settings').doc('trainerList').get();
-                if (listDoc.exists) {
-                    state.trainers = listDoc.data().names || ["李宜昆"];
+                const doc = await db.doc(`${path}/trainerList`).get();
+                if (doc.exists) {
+                    state.trainers = doc.data().names || ["李宜昆"];
                 }
-            } catch (e) { console.error("Sync Trainer List Fail", e); }
+            } catch (e) { console.error("Sync List Fail", e); }
         }
 
-        async function saveTrainerListToCloud() {
+        async function saveTrainerList() {
             if (!db || !state.user) return;
+            const path = `artifacts/${appId}/public/data/globalSettings`;
             try {
-                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('settings').doc('trainerList').set({
-                    names: state.trainers
-                });
-            } catch (e) { console.error("Save Trainer List Fail", e); }
+                await db.doc(`${path}/trainerList`).set({ names: state.trainers });
+            } catch (e) { console.error("Save List Fail", e); }
         }
 
         function updateUISelectors() {
@@ -366,10 +366,10 @@
                     state.trainers.push(name);
                     state.currentTrainer = name;
                     localStorage.setItem('poke_last_trainer', name);
-                    await saveTrainerListToCloud(); // 儲存名單到雲端
+                    await saveTrainerList(); 
                     updateUISelectors();
                     resetTableUI();
-                    await saveAllToCloud(); // 初始儲存
+                    await saveAllToCloud(); 
                     return;
                 } else {
                     sel.value = state.currentTrainer;
@@ -385,6 +385,81 @@
             showToast(`已切換至 ${val} 的雲端課表`);
         }
 
+        // --- 雲端資料儲存 (符合 Rule 1: /artifacts/{appId}/public/data/trainerData) ---
+        async function saveAllToCloud(silent = false) {
+            if (!state.user || !db) return;
+
+            const courseData = {};
+            document.querySelectorAll('tbody select[id^="course"]').forEach(s => courseData[s.id] = s.value);
+            const classData = {};
+            document.querySelectorAll('tbody select[id^="class"]').forEach(s => classData[s.id] = s.value);
+            const timeData = {};
+            document.querySelectorAll('.time-name, .time-range').forEach(el => {
+                const key = `${el.classList.contains('time-name') ? 'n' : 'r'}-${el.dataset.idx}`;
+                timeData[key] = el.innerText;
+            });
+
+            try {
+                // 路徑結構：/artifacts/{appId}/public/data/trainerData/{trainerName}
+                const path = `artifacts/${appId}/public/data/trainerData`;
+                await db.doc(`${path}/${state.currentTrainer}`).set({
+                    courseData, classData, timeData,
+                    metaData: { 
+                        title: document.getElementById('main-title').innerText, 
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp() 
+                    }
+                });
+                if (!silent) showToast("雲端同步成功！");
+            } catch (err) {
+                console.error("Cloud Save Fail", err);
+                if (!silent) showToast("儲存失敗！權限或路徑錯誤");
+            }
+        }
+
+        async function loadFromCloud() {
+            if (!state.user || !db) return;
+            try {
+                const path = `artifacts/${appId}/public/data/trainerData`;
+                const doc = await db.doc(`${path}/${state.currentTrainer}`).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.metaData) document.getElementById('main-title').innerText = data.metaData.title || "二苓國小課表";
+                    if (data.timeData) {
+                        Object.entries(data.timeData).forEach(([key, val]) => {
+                            const [type, idx] = key.split('-');
+                            const selector = type === 'n' ? '.time-name' : '.time-range';
+                            const el = document.querySelector(`${selector}[data-idx="${idx}"]`);
+                            if (el) el.innerText = val;
+                        });
+                    }
+                    resetTableUI();
+                    if (data.courseData) {
+                        Object.entries(data.courseData).forEach(([id, val]) => {
+                            const sel = document.getElementById(id);
+                            if (sel && val) {
+                                if (!Array.from(sel.options).some(o => o.value === val)) {
+                                    const o = document.createElement('option'); o.value = val; o.text = val; sel.add(o);
+                                }
+                                sel.value = val; applyTypeStyle(sel, id.split('-')[1], id.split('-')[2]);
+                            }
+                        });
+                    }
+                    if (data.classData) {
+                        Object.entries(data.classData).forEach(([id, val]) => {
+                            const sel = document.getElementById(id);
+                            if (sel && val) {
+                                if (!Array.from(sel.options).some(o => o.value === val)) {
+                                    const o = document.createElement('option'); o.value = val; o.text = val; sel.add(o);
+                                }
+                                sel.value = val;
+                            }
+                        });
+                    }
+                } else { resetTableUI(); }
+            } catch (err) { console.error("Cloud Load Fail", err); }
+        }
+
+        // --- 其他工具函數 ---
         function handleCourseSelect(select, value, idx, d) {
             if (value === "自定義") {
                 const custom = prompt("請輸入課程名稱：");
@@ -437,7 +512,7 @@
             if (state.trainers.length <= 1) { showToast("至少需保留一名訓練家"); return; }
             if (confirm(`確定要將訓練家 ${state.currentTrainer} 從雲端移除嗎？`)) {
                 state.trainers = state.trainers.filter(t => t !== state.currentTrainer);
-                await saveTrainerListToCloud(); // 更新雲端名單
+                await saveTrainerList(); 
                 state.currentTrainer = state.trainers[0];
                 handleUserSwitch();
             }
@@ -449,74 +524,6 @@
                 s.value = ""; applyTypeStyle(s, parts[1], parts[2]);
             });
             document.querySelectorAll('tbody select[id^="class"]').forEach(s => s.value = "");
-        }
-
-        async function saveAllToCloud(silent = false) {
-            if (!state.user || !db) return;
-
-            const courseData = {};
-            document.querySelectorAll('tbody select[id^="course"]').forEach(s => courseData[s.id] = s.value);
-            const classData = {};
-            document.querySelectorAll('tbody select[id^="class"]').forEach(s => classData[s.id] = s.value);
-            const timeData = {};
-            document.querySelectorAll('.time-name, .time-range').forEach(el => {
-                const key = `${el.classList.contains('time-name') ? 'n' : 'r'}-${el.dataset.idx}`;
-                timeData[key] = el.innerText;
-            });
-
-            try {
-                const docPath = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('trainers').doc(state.currentTrainer);
-                await docPath.set({
-                    courseData, classData, timeData,
-                    metaData: { title: document.getElementById('main-title').innerText, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }
-                });
-                if (!silent) showToast("雲端同步成功！");
-            } catch (err) {
-                console.error("Save fail", err);
-                if (!silent) showToast("雲端儲存失敗");
-            }
-        }
-
-        async function loadFromCloud() {
-            if (!state.user || !db) return;
-            try {
-                const doc = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('trainers').doc(state.currentTrainer).get();
-                if (doc.exists) {
-                    const data = doc.data();
-                    if (data.metaData) document.getElementById('main-title').innerText = data.metaData.title || "二苓國小課表";
-                    if (data.timeData) {
-                        Object.entries(data.timeData).forEach(([key, val]) => {
-                            const [type, idx] = key.split('-');
-                            const selector = type === 'n' ? '.time-name' : '.time-range';
-                            const el = document.querySelector(`${selector}[data-idx="${idx}"]`);
-                            if (el) el.innerText = val;
-                        });
-                    }
-                    resetTableUI();
-                    if (data.courseData) {
-                        Object.entries(data.courseData).forEach(([id, val]) => {
-                            const sel = document.getElementById(id);
-                            if (sel && val) {
-                                if (!Array.from(sel.options).some(o => o.value === val)) {
-                                    const o = document.createElement('option'); o.value = val; o.text = val; sel.add(o);
-                                }
-                                sel.value = val; applyTypeStyle(sel, id.split('-')[1], id.split('-')[2]);
-                            }
-                        });
-                    }
-                    if (data.classData) {
-                        Object.entries(data.classData).forEach(([id, val]) => {
-                            const sel = document.getElementById(id);
-                            if (sel && val) {
-                                if (!Array.from(sel.options).some(o => o.value === val)) {
-                                    const o = document.createElement('option'); o.value = val; o.text = val; sel.add(o);
-                                }
-                                sel.value = val;
-                            }
-                        });
-                    }
-                } else { resetTableUI(); }
-            } catch (err) { console.error("Load fail", err); }
         }
 
         function showToast(msg) {
