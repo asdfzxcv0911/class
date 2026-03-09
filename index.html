@@ -160,15 +160,16 @@
         <!-- 課表主體 -->
         <div class="game-card rounded-2xl bg-white overflow-hidden mb-6 shadow-xl">
             <div class="overflow-x-auto">
-                <table class="w-full border-collapse">
+                <table class="w-full border-collapse table-fixed">
                     <thead>
                         <tr class="bg-blue-600 text-white">
-                            <th class="p-4 border-r-4 border-b-4 border-slate-800 w-28 bg-blue-700 font-bold italic">節次</th>
-                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg">週一</th>
-                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg">週二</th>
-                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg">週三</th>
-                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg">週四</th>
-                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg">週五</th>
+                            <!-- 縮小節次寬度，平均分配空間給 Mon-Fri -->
+                            <th class="p-2 border-r-4 border-b-4 border-slate-800 w-[75px] bg-blue-700 font-bold italic text-sm">節次</th>
+                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg w-auto">週一</th>
+                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg w-auto">週二</th>
+                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg w-auto">週三</th>
+                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg w-auto">週四</th>
+                            <th class="p-4 border-b-4 border-slate-800 font-black text-lg w-auto">週五</th>
                         </tr>
                     </thead>
                     <tbody id="timetable-body">
@@ -288,17 +289,18 @@
             DEFAULT_PERIODS.forEach((p, idx) => {
                 const tr = document.createElement('tr');
                 
+                // 時間格：寬度與標題同步，內距縮小，時間文字強制不換行
                 const tdTime = document.createElement('td');
-                tdTime.className = "p-2 border-r-4 border-b-2 border-slate-800 bg-slate-50 text-center transition-colors hover:bg-yellow-50";
+                tdTime.className = "p-1 border-r-4 border-b-2 border-slate-800 bg-slate-50 text-center transition-colors hover:bg-yellow-50 w-[75px]";
                 tdTime.innerHTML = `
                     <div contenteditable="true" class="editable-field font-bold text-slate-800 text-sm time-name" data-idx="${idx}">${p.name}</div>
-                    <div contenteditable="true" class="editable-field text-[10px] text-slate-500 font-bold leading-tight time-range" data-idx="${idx}">${p.time || ''}</div>
+                    <div contenteditable="true" class="editable-field text-[9px] md:text-[10px] text-slate-500 font-bold leading-tight time-range whitespace-nowrap" data-idx="${idx}">${p.time || ''}</div>
                 `;
                 tr.appendChild(tdTime);
 
                 for (let d = 1; d <= 5; d++) {
                     const td = document.createElement('td');
-                    td.className = "p-1.5 border-b-2 border-r-2 border-slate-200 transition-all text-center";
+                    td.className = "p-1 md:p-1.5 border-b-2 border-r-2 border-slate-200 transition-all text-center";
                     
                     const container = document.createElement('div');
                     container.id = `cell-box-${idx}-${d}`;
