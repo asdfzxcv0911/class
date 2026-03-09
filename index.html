@@ -27,7 +27,7 @@
 
         /* 寶可夢屬性配色系統 */
         .type-none { background-color: #f1f5f9 !important; color: #94a3b8 !important; border: 1px solid #e2e8f0 !important; }
-        .type-國語 { background-color: #ff4422 !important; color: white !important; border: 1px solid #b22d14 !important; }
+        .type-國語 { background-color: #ff4422 !important; color: white !important; border: 2px solid #b22d14 !important; }
         .type-英語 { background-color: #3399ff !important; color: white !important; border: 2px solid #2266aa !important; }
         .type-數學 { background-color: #ffcc33 !important; color: #443300 !important; border: 2px solid #bba100 !important; }
         .type-生活 { background-color: #77cc55 !important; color: white !important; border: 2px solid #4d8c34 !important; }
@@ -91,12 +91,12 @@
         input, select, button, textarea {
             font-family: inherit;
             text-align: center;
-            text-align-last: center; /* 確保選單內容置中 */
+            text-align-last: center; 
         }
 
         #main-title:focus, .time-edit:focus {
-            background-color: rgba(255, 255, 255, 1);
-            box-shadow: 0 0 0 3px var(--poke-blue);
+            background-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 0 2px var(--poke-blue);
             outline: none;
             border-radius: 4px;
         }
@@ -104,6 +104,15 @@
         .poke-table {
             table-layout: fixed;
             width: 100%;
+        }
+
+        /* 班級選單微調 */
+        .class-select {
+            font-size: 10px;
+            opacity: 0.9;
+        }
+        @media (min-width: 768px) {
+            .class-select { font-size: 12px; }
         }
 
         @media print {
@@ -120,7 +129,6 @@
                 border: none !important; 
                 color: black !important; 
                 background: transparent !important; 
-                font-size: 1.1rem !important;
             }
             #main-title { border: none !important; background: transparent !important; box-shadow: none !important; }
             header { padding: 1rem !important; }
@@ -159,12 +167,12 @@
                 <table class="poke-table border-separate border-spacing-0">
                     <thead>
                         <tr class="bg-blue-600 text-white">
-                            <th class="p-1 md:p-4 border-r-2 md:border-r-4 border-b-4 border-slate-800 w-12 md:w-32 bg-blue-700 font-bold italic text-xs md:text-base text-center">節次</th>
-                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週一</th>
-                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週二</th>
-                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週三</th>
-                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週四</th>
-                            <th class="p-1 md:p-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週五</th>
+                            <th class="p-1 md:p-4 border-l-2 md:border-l-4 border-t-2 md:border-t-4 border-r-2 md:border-r-4 border-b-4 border-slate-800 w-12 md:w-32 bg-blue-700 font-bold italic text-xs md:text-base text-center">節次</th>
+                            <th class="p-1 md:p-4 border-t-2 md:border-t-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週一</th>
+                            <th class="p-1 md:p-4 border-t-2 md:border-t-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週二</th>
+                            <th class="p-1 md:p-4 border-t-2 md:border-t-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週三</th>
+                            <th class="p-1 md:p-4 border-t-2 md:border-t-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center">週四</th>
+                            <th class="p-1 md:p-4 border-t-2 md:border-t-4 border-b-4 border-slate-800 font-bold italic tracking-tighter md:tracking-widest text-xs md:text-base text-center border-r-0">週五</th>
                         </tr>
                     </thead>
                     <tbody id="timetable-body">
@@ -196,7 +204,18 @@
     <script>
         const courses = ["", "國語", "英語", "數學", "生活", "社會", "自然", "藝術", "綜合", "健康", "體育", "彈性", "本土語", "資訊", "音樂", "藝美", "自定義"];
         
-        // 預設時間區間
+        // 依照需求設定班級選項
+        const classOptions = [""];
+        // 1年級3班, 2年級3班, 3年級3班, 5年級3班
+        [1, 2, 3, 5].forEach(g => {
+            for(let c=1; c<=3; c++) classOptions.push(`${g}-${c}`);
+        });
+        // 4年級4班, 6年級4班
+        [4, 6].forEach(g => {
+            for(let c=1; c<=4; c++) classOptions.push(`${g}-${c}`);
+        });
+        classOptions.push("自定義");
+
         const defaultPeriods = [
             { name: "晨", time: "08:00~08:25" },
             { name: "一", time: "08:30~09:10" },
@@ -220,16 +239,15 @@
             defaultPeriods.forEach((p, pIdx) => {
                 const tr = document.createElement('tr');
                 
-                // 時間列 - 設定為可編輯
+                // 時間列
                 const tdTime = document.createElement('td');
                 tdTime.id = `time-col-${pIdx}`;
                 tdTime.contentEditable = "true";
-                tdTime.className = 'time-edit p-1 md:p-2 border-r-2 md:border-r-4 border-b-2 md:border-b-4 border-slate-800 bg-slate-100 text-center overflow-hidden transition-all';
+                tdTime.className = 'time-edit flex flex-col items-center justify-center p-0.5 md:p-2 border-l-2 md:border-l-4 border-r-2 md:border-r-4 border-b-2 md:border-b-4 border-slate-800 bg-slate-100 text-center overflow-hidden transition-all align-middle';
                 tdTime.innerHTML = `
-                    <div class="font-bold text-slate-800 text-[11px] md:text-sm">${p.name}</div>
-                    <div class="text-[8px] md:text-[10px] text-slate-500 font-bold">${p.time}</div>
+                    <div class="font-bold text-slate-800 text-[10px] md:text-sm leading-tight">${p.name}</div>
+                    <div class="text-[6.5px] md:text-[9px] text-slate-500 font-bold leading-none whitespace-nowrap">${p.time}</div>
                 `;
-                // 監聽修改後存檔
                 tdTime.onblur = () => saveData(true);
                 tr.appendChild(tdTime);
 
@@ -237,25 +255,61 @@
                     const td = document.createElement('td');
                     td.className = 'p-0.5 md:p-2 border-b-2 border-r-2 border-slate-100 text-center overflow-hidden';
                     
+                    const container = document.createElement('div');
+                    container.id = `wrapper-${pIdx}-${d}`;
+                    container.className = 'flex flex-col items-center justify-center w-full rounded-md md:rounded-lg transition-all cell-hover shadow-inner';
+
+                    // 課程選單
                     const select = document.createElement('select');
                     select.id = `cell-${pIdx}-${d}`;
-                    // 字體大小自適應，強制置中
-                    select.className = 'w-full h-10 md:h-14 bg-transparent text-center rounded-md md:rounded-lg cursor-pointer outline-none font-bold text-[11px] sm:text-xs md:text-lg transition-all appearance-none cell-hover shadow-inner';
-                    
+                    select.className = 'w-full h-7 md:h-10 bg-transparent text-center outline-none font-bold text-[11px] sm:text-xs md:text-lg appearance-none cursor-pointer leading-tight';
                     courses.forEach(c => {
                         const opt = document.createElement('option');
                         opt.value = c;
                         opt.text = c || "---";
                         select.appendChild(opt);
                     });
+                    select.onchange = (e) => handleCourseChange(select, e.target.value, pIdx, d);
 
-                    select.onchange = (e) => handleCourseChange(select, e.target.value);
-                    td.appendChild(select);
+                    // 班級快選選單
+                    const classSelect = document.createElement('select');
+                    classSelect.id = `class-${pIdx}-${d}`;
+                    classSelect.className = 'class-select w-full bg-transparent text-center outline-none font-bold opacity-80 leading-none pb-1 appearance-none cursor-pointer';
+                    classOptions.forEach(cl => {
+                        const opt = document.createElement('option');
+                        opt.value = cl;
+                        opt.text = cl || "班級";
+                        classSelect.appendChild(opt);
+                    });
+                    classSelect.onchange = (e) => handleClassChange(classSelect, e.target.value);
+
+                    container.appendChild(select);
+                    container.appendChild(classSelect);
+                    td.appendChild(container);
                     tr.appendChild(td);
                 }
                 tbody.appendChild(tr);
             });
             loadData();
+        }
+
+        function handleClassChange(select, value) {
+            if (value === "自定義") {
+                const customVal = prompt("請輸入自定義班級名稱：");
+                if (customVal) {
+                    const exists = Array.from(select.options).some(o => o.value === customVal);
+                    if (!exists) {
+                        const newOpt = document.createElement('option');
+                        newOpt.value = customVal;
+                        newOpt.text = customVal;
+                        select.add(newOpt);
+                    }
+                    select.value = customVal;
+                } else {
+                    select.value = "";
+                }
+            }
+            saveData(true);
         }
 
         function updatePersonSelector() {
@@ -271,7 +325,6 @@
             addOpt.value = "__ADD_NEW__";
             addOpt.text = "＋ 新增";
             selector.appendChild(addOpt);
-            
             selector.value = currentPerson;
             document.getElementById('trainer-info').innerText = `Trainer: ${currentPerson} • Region: Er-Ling • Rank: Master`;
         }
@@ -298,7 +351,7 @@
             showToast(`切換至 ${currentPerson}`);
         }
 
-        function handleCourseChange(select, value) {
+        function handleCourseChange(select, value, pIdx, d) {
             if (value === "自定義") {
                 const customVal = prompt("發現新招式！請輸入名稱：");
                 if (customVal) {
@@ -311,61 +364,51 @@
                     select.value = "";
                 }
             }
-            updateCellStyle(select);
+            updateCellStyle(select, pIdx, d);
             saveData(true);
         }
 
-        function updateCellStyle(select) {
+        function updateCellStyle(select, pIdx, d) {
             const val = select.value;
-            select.className = 'w-full h-10 md:h-14 text-center rounded-md md:rounded-lg cursor-pointer outline-none font-bold text-[11px] sm:text-xs md:text-lg transition-all appearance-none cell-hover shadow-inner';
-            
+            const wrapper = document.getElementById(`wrapper-${pIdx}-${d}`);
+            wrapper.className = 'flex flex-col items-center justify-center w-full rounded-md md:rounded-lg transition-all cell-hover shadow-inner';
             if (val) {
                 const typeClass = `type-${val}`;
-                select.classList.add(typeClass);
-                if (!select.classList.contains(typeClass)) {
-                    select.style.backgroundColor = '#d1d5db';
-                    select.style.color = '#1f2937';
-                    select.style.border = '1px solid #9ca3af';
+                wrapper.classList.add(typeClass);
+                if (!wrapper.classList.contains(typeClass)) {
+                    wrapper.style.backgroundColor = '#d1d5db';
+                    wrapper.style.color = '#1f2937';
                 } else {
-                    select.style.backgroundColor = '';
-                    select.style.color = '';
-                    select.style.border = '';
+                    wrapper.style.backgroundColor = '';
+                    wrapper.style.color = '';
                 }
             } else {
-                select.classList.add('type-none');
+                wrapper.classList.add('type-none');
             }
         }
 
         function saveData(silent = false) {
             const data = {};
-            // 課程儲存
-            document.querySelectorAll('tbody select').forEach(s => {
-                data[s.id] = s.value;
+            document.querySelectorAll('tbody select[id^="cell-"]').forEach(s => {
+                const idMatch = s.id.match(/cell-(\d+)-(\d+)/);
+                const pIdx = idMatch[1];
+                const d = idMatch[2];
+                const classVal = document.getElementById(`class-${pIdx}-${d}`).value;
+                data[s.id] = { course: s.value, className: classVal };
             });
-            localStorage.setItem(`poke_data_${currentPerson}`, JSON.stringify(data));
-            
-            // 標題儲存
+            localStorage.setItem(`poke_data_v4_${currentPerson}`, JSON.stringify(data));
             localStorage.setItem(`poke_global_title`, document.getElementById('main-title').innerText);
-            
-            // 自定義時間儲存
             const timeData = {};
-            document.querySelectorAll('.time-edit').forEach(td => {
-                timeData[td.id] = td.innerHTML;
-            });
+            document.querySelectorAll('.time-edit').forEach(td => { timeData[td.id] = td.innerHTML; });
             localStorage.setItem(`poke_global_times`, JSON.stringify(timeData));
-
             if (!silent) showToast("進度已儲存！");
         }
 
         function loadData() {
-            // 載入課程資料
-            const savedData = localStorage.getItem(`poke_data_${currentPerson}`);
+            const savedData = localStorage.getItem(`poke_data_v4_${currentPerson}`);
             const savedTitle = localStorage.getItem(`poke_global_title`);
             const savedTimes = localStorage.getItem(`poke_global_times`);
-
             if (savedTitle) document.getElementById('main-title').innerText = savedTitle;
-            
-            // 載入自定義時間
             if (savedTimes) {
                 const timeData = JSON.parse(savedTimes);
                 for (const id in timeData) {
@@ -373,26 +416,37 @@
                     if (td) td.innerHTML = timeData[id];
                 }
             }
-
-            document.querySelectorAll('tbody select').forEach(select => {
+            document.querySelectorAll('tbody select[id^="cell-"]').forEach(select => {
+                const idMatch = select.id.match(/cell-(\d+)-(\d+)/);
+                const pIdx = idMatch[1];
+                const d = idMatch[2];
+                const classSelect = document.getElementById(`class-${pIdx}-${d}`);
                 select.value = "";
-                updateCellStyle(select);
+                classSelect.value = "";
+                updateCellStyle(select, pIdx, d);
             });
-
             if (savedData) {
                 const data = JSON.parse(savedData);
                 for (const id in data) {
                     const select = document.getElementById(id);
                     if (select) {
-                        const val = data[id];
-                        if (val && !Array.from(select.options).some(opt => opt.value === val)) {
+                        const idMatch = select.id.match(/cell-(\d+)-(\d+)/);
+                        const pIdx = idMatch[1];
+                        const d = idMatch[2];
+                        const classSelect = document.getElementById(`class-${pIdx}-${d}`);
+                        const courseVal = data[id].course;
+                        const classVal = data[id].className;
+                        if (courseVal && !Array.from(select.options).some(opt => opt.value === courseVal)) {
                             const newOpt = document.createElement('option');
-                            newOpt.value = val;
-                            newOpt.text = val;
-                            select.add(newOpt);
+                            newOpt.value = courseVal; newOpt.text = courseVal; select.add(newOpt);
                         }
-                        select.value = val;
-                        updateCellStyle(select);
+                        if (classVal && !Array.from(classSelect.options).some(opt => opt.value === classVal)) {
+                            const newOpt = document.createElement('option');
+                            newOpt.value = classVal; newOpt.text = classVal; classSelect.add(newOpt);
+                        }
+                        select.value = courseVal;
+                        classSelect.value = classVal;
+                        updateCellStyle(select, pIdx, d);
                     }
                 }
             }
@@ -401,7 +455,7 @@
         function deleteCurrentPerson() {
             if (peopleList.length <= 1) return;
             if (confirm(`確定要刪除 ${currentPerson} 嗎？`)) {
-                localStorage.removeItem(`poke_data_${currentPerson}`);
+                localStorage.removeItem(`poke_data_v4_${currentPerson}`);
                 peopleList = peopleList.filter(p => p !== currentPerson);
                 localStorage.setItem('poke_people_list', JSON.stringify(peopleList));
                 currentPerson = peopleList[0];
