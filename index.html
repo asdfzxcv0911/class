@@ -40,6 +40,11 @@
         .type-本土語 { background-color: #e0c068 !important; color: white !important; }
         .type-資訊 { background-color: #b8b8d0 !important; color: #334144 !important; }
         .type-音樂 { background-color: #6890f0 !important; color: white !important; }
+        /* 新增科目配色 */
+        .type-藝表 { background-color: #f85888 !important; color: white !important; }
+        .type-藝美 { background-color: #705898 !important; color: white !important; }
+        /* 自定義課程預設背景 */
+        .type-custom { background-color: #b0875e !important; color: white !important; border: 2px solid #8c6a4a !important; }
 
         .game-card {
             border: 4px solid var(--poke-black);
@@ -114,9 +119,9 @@
                 <!-- 訓練家管理 -->
                 <div class="no-print flex items-center gap-2 bg-white/90 p-2 rounded-xl border-2 border-slate-800">
                     <span class="font-bold text-xs">當前訓練家:</span>
-                    <select id="user-selector" onchange="handleUserSwitch()" class="bg-blue-50 border border-slate-400 rounded px-2 py-1 font-bold text-xs">
+                    <select id="user-selector" onchange="handleUserSwitch()" class="bg-blue-50 border border-slate-400 rounded px-2 py-1 font-bold text-xs cursor-pointer">
                     </select>
-                    <button onclick="addNewTrainer()" class="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold hover:bg-green-600">＋新增</button>
+                    <button onclick="addNewTrainer()" class="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold hover:bg-green-600 transition-colors">＋新增</button>
                 </div>
             </header>
         </div>
@@ -162,19 +167,22 @@
     </div>
 
     <!-- 提示框 -->
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-xl transition-all duration-300 z-50 font-bold text-sm">
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-xl transition-all duration-300 z-50 font-bold text-sm text-center min-w-[200px]">
         提示訊息
     </div>
 
     <script>
-        const COURSES = ["", "國語", "英語", "數學", "生活", "社會", "自然", "藝術", "綜合", "健康", "體育", "彈性", "本土語", "資訊", "音樂", "自定義"];
+        // 核心科目清單
+        const COURSES = ["", "國語", "英語", "數學", "生活", "社會", "自然", "藝術", "綜合", "健康", "體育", "彈性", "本土語", "資訊", "音樂", "藝表", "藝美", "自定義"];
+        
+        // 預設班級選單
         const CLASSES = [""];
         [3, 3, 3, 4, 3, 4].forEach((count, gradeIdx) => {
             for (let i = 1; i <= count; i++) { CLASSES.push(`${gradeIdx + 1}-${i}`); }
         });
         CLASSES.push("自定義");
 
-        const PERIODS = [
+        const DEFAULT_PERIODS = [
             { name: "晨光", time: "08:00~08:25" },
             { name: "第一節", time: "08:30~09:10" },
             { name: "第二節", time: "09:20~10:00" },
@@ -186,23 +194,24 @@
             { name: "第七節", time: "15:20~16:00" }
         ];
 
+        // 從 LocalStorage 載入完整資料
         let appData = JSON.parse(localStorage.getItem('erling_poke_data')) || {
             trainers: ["李宜昆"],
             currentTrainer: "李宜昆",
-            title: "二苓國小 114 學年度課表",
-            schedules: {} // 格式: { "訓練家名字": { course: {}, class: {}, time: {} } }
+            schedules: {} 
         };
 
         window.onload = () => {
             renderTimetable();
-            updateTrainerList();
-            loadTrainerData();
+            updateTrainerListUI();
+            loadCurrentTrainerData();
         };
 
+        // 渲染表格骨架
         function renderTimetable() {
             const tbody = document.getElementById('timetable-body');
             tbody.innerHTML = '';
-            PERIODS.forEach((p, idx) => {
+            DEFAULT_PERIODS.forEach((p, idx) => {
                 const tr = document.createElement('tr');
                 const tdTime = document.createElement('td');
                 tdTime.className = "p-0.5 border-r-4 border-b-2 border-slate-800 bg-slate-50 text-center w-[60px] sm:w-[75px]";
@@ -217,7 +226,7 @@
                     td.className = "p-1 border-b-2 border-r-2 border-slate-200 text-center";
                     const container = document.createElement('div');
                     container.id = `cell-box-${idx}-${d}`;
-                    container.className = "merged-cell-container rounded-lg shadow-sm h-11 md:h-14";
+                    container.className = "merged-cell-container rounded-lg shadow-sm h-11 md:h-14 transition-all";
 
                     const selCourse = document.createElement('select');
                     selCourse.id = `course-${idx}-${d}`;
@@ -244,19 +253,22 @@
                 }
                 tbody.appendChild(tr);
             });
-            document.getElementById('main-title').innerText = appData.title;
+
+            // 標題編輯事件
             document.getElementById('main-title').onblur = () => {
-                appData.title = document.getElementById('main-title').innerText;
                 saveToLocal();
             };
         }
 
+        // 處理選擇與自定義輸入
         function handleSelectChange(select, value, type, idx, d) {
             if (value === "自定義") {
-                const custom = prompt("請輸入自定義名稱：");
+                const custom = prompt("請輸入名稱：");
                 if (custom) {
-                    const opt = document.createElement('option');
-                    opt.value = custom; opt.text = custom; select.add(opt);
+                    if (!Array.from(select.options).some(o => o.value === custom)) {
+                        const opt = document.createElement('option');
+                        opt.value = custom; opt.text = custom; select.add(opt);
+                    }
                     select.value = custom;
                 } else { select.value = ""; }
             }
@@ -264,43 +276,72 @@
             saveToLocal();
         }
 
+        // 套用寶可夢屬性配色
         function applyTypeStyle(select, idx, d) {
             const val = select.value;
             const container = document.getElementById(`cell-box-${idx}-${d}`);
             if (!container) return;
-            const allTypes = COURSES.map(c => `type-${c}`);
-            container.classList.remove(...allTypes, 'type-none');
+
+            // 清除現有顏色樣式
+            const classesToRemove = Array.from(container.classList).filter(c => c.startsWith('type-'));
+            container.classList.remove(...classesToRemove);
             container.style.backgroundColor = "";
-            if (!val) { container.classList.add('type-none'); select.style.color = "#94a3b8"; return; }
+
+            if (!val) {
+                container.classList.add('type-none');
+                select.style.color = "#94a3b8";
+                return;
+            }
+
             const typeClass = `type-${val}`;
             container.classList.add(typeClass);
+
+            // 檢查是否成功套用預設顏色，若無則套用自定義通用色
             const computedStyle = window.getComputedStyle(container);
-            if (computedStyle.backgroundColor === "rgba(0, 0, 0, 0)" || computedStyle.backgroundColor === "transparent") {
-                container.style.backgroundColor = "#e2e8f0";
-                select.style.color = "#1e293b";
-            } else { select.style.color = "inherit"; }
+            const bgColor = computedStyle.backgroundColor;
+            // 如果背景色接近透明或白色（代表沒中 type class），則套用 custom 色
+            if (bgColor === "rgba(0, 0, 0, 0)" || bgColor === "transparent" || bgColor === "rgb(255, 255, 255)") {
+                container.classList.add('type-custom');
+                select.style.color = "white";
+            } else {
+                select.style.color = "inherit";
+            }
         }
 
+        // 儲存至本地
         function saveToLocal() {
             const trainer = appData.currentTrainer;
-            if (!appData.schedules[trainer]) appData.schedules[trainer] = { course: {}, class: {}, time: {} };
+            if (!appData.schedules[trainer]) appData.schedules[trainer] = { course: {}, class: {}, time: {}, title: "" };
 
+            appData.schedules[trainer].title = document.getElementById('main-title').innerText;
+            
             document.querySelectorAll('select[id^="course"]').forEach(s => appData.schedules[trainer].course[s.id] = s.value);
             document.querySelectorAll('select[id^="class"]').forEach(s => appData.schedules[trainer].class[s.id] = s.value);
             
+            const timeData = {};
             document.querySelectorAll('.time-name, .time-range').forEach((el, i) => {
-                appData.schedules[trainer].time[i] = el.innerText;
+                timeData[i] = el.innerText;
             });
+            appData.schedules[trainer].time = timeData;
 
             localStorage.setItem('erling_poke_data', JSON.stringify(appData));
-            showToast("已自動儲存至瀏覽器");
+            showToast("自動儲存中...");
         }
 
-        function loadTrainerData() {
+        // 載入當前訓練家資料
+        function loadCurrentTrainerData() {
             const trainer = appData.currentTrainer;
             const data = appData.schedules[trainer];
-            if (!data) { resetTableUI(); return; }
+            
+            // 更新標題
+            document.getElementById('main-title').innerText = (data && data.title) ? data.title : "二苓國小 114 學年度課表";
 
+            if (!data) { 
+                resetTableUI(); 
+                return; 
+            }
+
+            // 載入課程
             if (data.course) {
                 Object.entries(data.course).forEach(([id, val]) => {
                     const sel = document.getElementById(id);
@@ -314,6 +355,7 @@
                     }
                 });
             }
+            // 載入班級
             if (data.class) {
                 Object.entries(data.class).forEach(([id, val]) => {
                     const sel = document.getElementById(id);
@@ -325,6 +367,7 @@
                     }
                 });
             }
+            // 載入時間
             if (data.time) {
                 const timeEls = document.querySelectorAll('.time-name, .time-range');
                 Object.entries(data.time).forEach(([idx, val]) => {
@@ -333,7 +376,8 @@
             }
         }
 
-        function updateTrainerList() {
+        // 更新下拉名單 UI
+        function updateTrainerListUI() {
             const sel = document.getElementById('user-selector');
             sel.innerHTML = '';
             appData.trainers.forEach(t => {
@@ -343,24 +387,35 @@
             sel.value = appData.currentTrainer;
         }
 
+        // 切換訓練家
         function handleUserSwitch() {
-            appData.currentTrainer = document.getElementById('user-selector').value;
+            const newName = document.getElementById('user-selector').value;
+            appData.currentTrainer = newName;
+            
+            // 立即重設並重新載入，解決不更新的問題
             resetTableUI();
-            loadTrainerData();
-            saveToLocal();
+            loadCurrentTrainerData();
+            
+            localStorage.setItem('erling_poke_data', JSON.stringify(appData));
+            showToast(`已切換至: ${newName}`);
         }
 
+        // 新增訓練家
         function addNewTrainer() {
-            const name = prompt("請輸入新訓練家名字：");
+            const name = prompt("發現新訓練家！請輸入名字：");
             if (name && !appData.trainers.includes(name)) {
                 appData.trainers.push(name);
                 appData.currentTrainer = name;
-                updateTrainerList();
+                updateTrainerListUI();
                 resetTableUI();
+                loadCurrentTrainerData();
                 saveToLocal();
+            } else if (name) {
+                alert("該名字已在名冊中！");
             }
         }
 
+        // 重設表格顯示
         function resetTableUI() {
             document.querySelectorAll('select').forEach(s => {
                 s.value = "";
@@ -369,38 +424,50 @@
                     applyTypeStyle(s, parts[1], parts[2]);
                 }
             });
+            // 重置時間回預設
+            const timeEls = document.querySelectorAll('.time-name, .time-range');
+            let i = 0;
+            DEFAULT_PERIODS.forEach(p => {
+                if (timeEls[i]) timeEls[i].innerText = p.name;
+                if (timeEls[i+1]) timeEls[i+1].innerText = p.time;
+                i += 2;
+            });
         }
 
         function clearCurrentData() {
             if (confirm("確定要清空當前這位訓練家的課表嗎？")) {
                 resetTableUI();
                 saveToLocal();
+                showToast("課表已清空");
             }
         }
 
         function deleteTrainer() {
-            if (appData.trainers.length <= 1) return;
-            if (confirm(`確定要刪除「${appData.currentTrainer}」嗎？`)) {
+            if (appData.trainers.length <= 1) {
+                alert("至少需要保留一名訓練家！");
+                return;
+            }
+            if (confirm(`確定要刪除「${appData.currentTrainer}」及其所有資料嗎？`)) {
                 delete appData.schedules[appData.currentTrainer];
                 appData.trainers = appData.trainers.filter(t => t !== appData.currentTrainer);
                 appData.currentTrainer = appData.trainers[0];
-                updateTrainerList();
-                renderTimetable();
-                loadTrainerData();
+                updateTrainerListUI();
+                loadCurrentTrainerData();
                 saveToLocal();
+                showToast("已成功刪除");
             }
         }
 
-        // --- 檔案匯出/匯入 (手動同步用) ---
+        // 匯出/匯入
         function exportData() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "二苓國小課表備份.json");
+            downloadAnchorNode.setAttribute("download", `二苓國小課表備份_${new Date().toLocaleDateString()}.json`);
             document.body.appendChild(downloadAnchorNode);
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
-            showToast("備份檔案已下載");
+            showToast("備份檔案下載中");
         }
 
         function importData() {
@@ -414,10 +481,12 @@
                 reader.onload = readerEvent => {
                     try {
                         const content = JSON.parse(readerEvent.target.result);
-                        appData = content;
-                        localStorage.setItem('erling_poke_data', JSON.stringify(appData));
-                        location.reload();
-                    } catch (err) { alert("讀取失敗，請確認檔案格式"); }
+                        if (content.trainers) {
+                            appData = content;
+                            localStorage.setItem('erling_poke_data', JSON.stringify(appData));
+                            location.reload(); // 匯入後重新整理確保完全套用
+                        }
+                    } catch (err) { alert("讀取失敗，請確認檔案格式是否正確"); }
                 }
             }
             input.click();
@@ -431,7 +500,7 @@
             setTimeout(() => {
                 toast.classList.remove('opacity-100');
                 toast.classList.add('opacity-0');
-            }, 2000);
+            }, 1500);
         }
     </script>
 </body>
