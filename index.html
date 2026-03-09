@@ -40,11 +40,10 @@
         .type-本土語 { background-color: #e0c068 !important; color: white !important; }
         .type-資訊 { background-color: #b8b8d0 !important; color: #334144 !important; }
         .type-音樂 { background-color: #6890f0 !important; color: white !important; }
-        /* 新增科目配色 */
         .type-藝表 { background-color: #f85888 !important; color: white !important; }
         .type-藝美 { background-color: #705898 !important; color: white !important; }
-        /* 自定義課程預設背景 */
-        .type-custom { background-color: #b0875e !important; color: white !important; border: 2px solid #8c6a4a !important; }
+        /* 自定義課程專用色 */
+        .type-custom { background-color: #b0875e !important; color: white !important; border: 1px solid #8c6a4a !important; }
 
         .game-card {
             border: 4px solid var(--poke-black);
@@ -141,7 +140,7 @@
                         </tr>
                     </thead>
                     <tbody id="timetable-body">
-                        <!-- 動態生成 -->
+                        <!-- 由 JavaScript 動態生成 -->
                     </tbody>
                 </table>
             </div>
@@ -172,13 +171,14 @@
     </div>
 
     <script>
-        // 核心科目清單
-        const COURSES = ["", "國語", "英語", "數學", "生活", "社會", "自然", "藝術", "綜合", "健康", "體育", "彈性", "本土語", "資訊", "音樂", "藝表", "藝美", "自定義"];
+        // 科目與配色名單
+        const KNOWN_COURSES = ["國語", "英語", "數學", "生活", "社會", "自然", "藝術", "綜合", "健康", "體育", "彈性", "本土語", "資訊", "音樂", "藝表", "藝美"];
+        const COURSES = ["", ...KNOWN_COURSES, "自定義"];
         
-        // 預設班級選單
         const CLASSES = [""];
-        [3, 3, 3, 4, 3, 4].forEach((count, gradeIdx) => {
-            for (let i = 1; i <= count; i++) { CLASSES.push(`${gradeIdx + 1}-${i}`); }
+        [1, 2, 3, 4, 5, 6].forEach(grade => {
+            const count = (grade === 4 || grade === 6) ? 4 : 3;
+            for (let i = 1; i <= count; i++) { CLASSES.push(`${grade}-${i}`); }
         });
         CLASSES.push("自定義");
 
@@ -194,7 +194,6 @@
             { name: "第七節", time: "15:20~16:00" }
         ];
 
-        // 從 LocalStorage 載入完整資料
         let appData = JSON.parse(localStorage.getItem('erling_poke_data')) || {
             trainers: ["李宜昆"],
             currentTrainer: "李宜昆",
@@ -202,22 +201,23 @@
         };
 
         window.onload = () => {
-            renderTimetable();
+            renderTimetableSkeleton();
             updateTrainerListUI();
             loadCurrentTrainerData();
         };
 
-        // 渲染表格骨架
-        function renderTimetable() {
+        // 渲染基礎表格 (解決錯亂的關鍵：賦予每個編輯區專屬 ID)
+        function renderTimetableSkeleton() {
             const tbody = document.getElementById('timetable-body');
             tbody.innerHTML = '';
             DEFAULT_PERIODS.forEach((p, idx) => {
                 const tr = document.createElement('tr');
                 const tdTime = document.createElement('td');
                 tdTime.className = "p-0.5 border-r-4 border-b-2 border-slate-800 bg-slate-50 text-center w-[60px] sm:w-[75px]";
+                // 使用 tn- (time name) 和 tr- (time range) 作為 ID 避免錯亂
                 tdTime.innerHTML = `
-                    <div contenteditable="true" class="editable-field font-bold text-slate-800 text-[10px] sm:text-xs time-name" onblur="saveToLocal()">${p.name}</div>
-                    <div contenteditable="true" class="editable-field text-[8px] sm:text-[9px] text-slate-500 font-bold leading-tight whitespace-nowrap" onblur="saveToLocal()">${p.time}</div>
+                    <div id="tn-${idx}" contenteditable="true" class="editable-field font-bold text-slate-800 text-[10px] sm:text-xs" onblur="saveToLocal()">${p.name}</div>
+                    <div id="tr-${idx}" contenteditable="true" class="editable-field text-[8px] sm:text-[9px] text-slate-500 font-bold leading-tight whitespace-nowrap" onblur="saveToLocal()">${p.time}</div>
                 `;
                 tr.appendChild(tdTime);
 
@@ -254,13 +254,9 @@
                 tbody.appendChild(tr);
             });
 
-            // 標題編輯事件
-            document.getElementById('main-title').onblur = () => {
-                saveToLocal();
-            };
+            document.getElementById('main-title').onblur = () => saveToLocal();
         }
 
-        // 處理選擇與自定義輸入
         function handleSelectChange(select, value, type, idx, d) {
             if (value === "自定義") {
                 const custom = prompt("請輸入名稱：");
@@ -276,15 +272,15 @@
             saveToLocal();
         }
 
-        // 套用寶可夢屬性配色
+        // 顏色套用邏輯
         function applyTypeStyle(select, idx, d) {
             const val = select.value;
             const container = document.getElementById(`cell-box-${idx}-${d}`);
             if (!container) return;
 
-            // 清除現有顏色樣式
-            const classesToRemove = Array.from(container.classList).filter(c => c.startsWith('type-'));
-            container.classList.remove(...classesToRemove);
+            container.classList.forEach(className => {
+                if (className.startsWith('type-')) { container.classList.remove(className); }
+            });
             container.style.backgroundColor = "";
 
             if (!val) {
@@ -293,53 +289,46 @@
                 return;
             }
 
-            const typeClass = `type-${val}`;
-            container.classList.add(typeClass);
-
-            // 檢查是否成功套用預設顏色，若無則套用自定義通用色
-            const computedStyle = window.getComputedStyle(container);
-            const bgColor = computedStyle.backgroundColor;
-            // 如果背景色接近透明或白色（代表沒中 type class），則套用 custom 色
-            if (bgColor === "rgba(0, 0, 0, 0)" || bgColor === "transparent" || bgColor === "rgb(255, 255, 255)") {
+            if (KNOWN_COURSES.includes(val)) {
+                container.classList.add(`type-${val}`);
+                select.style.color = "inherit";
+            } else {
                 container.classList.add('type-custom');
                 select.style.color = "white";
-            } else {
-                select.style.color = "inherit";
             }
         }
 
-        // 儲存至本地
         function saveToLocal() {
             const trainer = appData.currentTrainer;
             if (!appData.schedules[trainer]) appData.schedules[trainer] = { course: {}, class: {}, time: {}, title: "" };
 
             appData.schedules[trainer].title = document.getElementById('main-title').innerText;
             
+            // 儲存課程與班級
             document.querySelectorAll('select[id^="course"]').forEach(s => appData.schedules[trainer].course[s.id] = s.value);
             document.querySelectorAll('select[id^="class"]').forEach(s => appData.schedules[trainer].class[s.id] = s.value);
             
+            // 儲存節次時間 (使用特定 ID 確保不亂掉)
             const timeData = {};
-            document.querySelectorAll('.time-name, .time-range').forEach((el, i) => {
-                timeData[i] = el.innerText;
+            DEFAULT_PERIODS.forEach((_, idx) => {
+                timeData[`tn-${idx}`] = document.getElementById(`tn-${idx}`).innerText;
+                timeData[`tr-${idx}`] = document.getElementById(`tr-${idx}`).innerText;
             });
             appData.schedules[trainer].time = timeData;
 
             localStorage.setItem('erling_poke_data', JSON.stringify(appData));
-            showToast("自動儲存中...");
+            showToast("已儲存");
         }
 
-        // 載入當前訓練家資料
         function loadCurrentTrainerData() {
             const trainer = appData.currentTrainer;
             const data = appData.schedules[trainer];
             
-            // 更新標題
             document.getElementById('main-title').innerText = (data && data.title) ? data.title : "二苓國小 114 學年度課表";
 
-            if (!data) { 
-                resetTableUI(); 
-                return; 
-            }
+            resetTableUI(); 
+
+            if (!data) return;
 
             // 載入課程
             if (data.course) {
@@ -367,16 +356,15 @@
                     }
                 });
             }
-            // 載入時間
+            // 載入時間 (精確 ID 匹配)
             if (data.time) {
-                const timeEls = document.querySelectorAll('.time-name, .time-range');
-                Object.entries(data.time).forEach(([idx, val]) => {
-                    if (timeEls[idx]) timeEls[idx].innerText = val;
+                Object.entries(data.time).forEach(([id, val]) => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerText = val;
                 });
             }
         }
 
-        // 更新下拉名單 UI
         function updateTrainerListUI() {
             const sel = document.getElementById('user-selector');
             sel.innerHTML = '';
@@ -387,27 +375,18 @@
             sel.value = appData.currentTrainer;
         }
 
-        // 切換訓練家
         function handleUserSwitch() {
-            const newName = document.getElementById('user-selector').value;
-            appData.currentTrainer = newName;
-            
-            // 立即重設並重新載入，解決不更新的問題
-            resetTableUI();
+            appData.currentTrainer = document.getElementById('user-selector').value;
             loadCurrentTrainerData();
-            
-            localStorage.setItem('erling_poke_data', JSON.stringify(appData));
-            showToast(`已切換至: ${newName}`);
+            showToast(`切換至: ${appData.currentTrainer}`);
         }
 
-        // 新增訓練家
         function addNewTrainer() {
             const name = prompt("發現新訓練家！請輸入名字：");
             if (name && !appData.trainers.includes(name)) {
                 appData.trainers.push(name);
                 appData.currentTrainer = name;
                 updateTrainerListUI();
-                resetTableUI();
                 loadCurrentTrainerData();
                 saveToLocal();
             } else if (name) {
@@ -415,8 +394,8 @@
             }
         }
 
-        // 重設表格顯示
         function resetTableUI() {
+            // 清除下拉選單與顏色
             document.querySelectorAll('select').forEach(s => {
                 s.value = "";
                 if (s.id.includes('course')) {
@@ -424,41 +403,34 @@
                     applyTypeStyle(s, parts[1], parts[2]);
                 }
             });
-            // 重置時間回預設
-            const timeEls = document.querySelectorAll('.time-name, .time-range');
-            let i = 0;
-            DEFAULT_PERIODS.forEach(p => {
-                if (timeEls[i]) timeEls[i].innerText = p.name;
-                if (timeEls[i+1]) timeEls[i+1].innerText = p.time;
-                i += 2;
+            // 恢復預設節次名稱與時間
+            DEFAULT_PERIODS.forEach((p, idx) => {
+                const tn = document.getElementById(`tn-${idx}`);
+                const tr = document.getElementById(`tr-${idx}`);
+                if (tn) tn.innerText = p.name;
+                if (tr) tr.innerText = p.time;
             });
         }
 
         function clearCurrentData() {
-            if (confirm("確定要清空當前這位訓練家的課表嗎？")) {
+            if (confirm("確定要重設當前這位訓練家的課表嗎？")) {
                 resetTableUI();
                 saveToLocal();
-                showToast("課表已清空");
             }
         }
 
         function deleteTrainer() {
-            if (appData.trainers.length <= 1) {
-                alert("至少需要保留一名訓練家！");
-                return;
-            }
-            if (confirm(`確定要刪除「${appData.currentTrainer}」及其所有資料嗎？`)) {
+            if (appData.trainers.length <= 1) return;
+            if (confirm(`確定要刪除「${appData.currentTrainer}」嗎？`)) {
                 delete appData.schedules[appData.currentTrainer];
                 appData.trainers = appData.trainers.filter(t => t !== appData.currentTrainer);
                 appData.currentTrainer = appData.trainers[0];
                 updateTrainerListUI();
                 loadCurrentTrainerData();
-                saveToLocal();
-                showToast("已成功刪除");
+                localStorage.setItem('erling_poke_data', JSON.stringify(appData));
             }
         }
 
-        // 匯出/匯入
         function exportData() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData));
             const downloadAnchorNode = document.createElement('a');
@@ -467,7 +439,6 @@
             document.body.appendChild(downloadAnchorNode);
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
-            showToast("備份檔案下載中");
         }
 
         function importData() {
@@ -484,7 +455,7 @@
                         if (content.trainers) {
                             appData = content;
                             localStorage.setItem('erling_poke_data', JSON.stringify(appData));
-                            location.reload(); // 匯入後重新整理確保完全套用
+                            location.reload();
                         }
                     } catch (err) { alert("讀取失敗，請確認檔案格式是否正確"); }
                 }
@@ -500,7 +471,7 @@
             setTimeout(() => {
                 toast.classList.remove('opacity-100');
                 toast.classList.add('opacity-0');
-            }, 1500);
+            }, 1000);
         }
     </script>
 </body>
