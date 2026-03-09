@@ -91,7 +91,7 @@
         input, select, button, textarea {
             font-family: inherit;
             text-align: center;
-            text-align-last: center; 
+            text-align-last: center; /* 確保選單內容置中 */
         }
 
         #main-title:focus, .time-edit:focus {
@@ -220,16 +220,16 @@
             defaultPeriods.forEach((p, pIdx) => {
                 const tr = document.createElement('tr');
                 
-                // 時間列 - 設定為可編輯並使用 Flex 垂直布局
+                // 時間列 - 設定為可編輯
                 const tdTime = document.createElement('td');
                 tdTime.id = `time-col-${pIdx}`;
                 tdTime.contentEditable = "true";
-                // 使用 flex-col 確保強制上下換行
-                tdTime.className = 'time-edit flex flex-col items-center justify-center p-1 md:p-2 border-r-2 md:border-r-4 border-b-2 md:border-b-4 border-slate-800 bg-slate-100 text-center overflow-hidden transition-all';
+                tdTime.className = 'time-edit p-1 md:p-2 border-r-2 md:border-r-4 border-b-2 md:border-b-4 border-slate-800 bg-slate-100 text-center overflow-hidden transition-all';
                 tdTime.innerHTML = `
-                    <div class="font-bold text-slate-800 text-[12px] md:text-sm leading-tight">${p.name}</div>
-                    <div class="text-[8px] md:text-[10px] text-slate-500 font-bold leading-tight">${p.time}</div>
+                    <div class="font-bold text-slate-800 text-[11px] md:text-sm">${p.name}</div>
+                    <div class="text-[8px] md:text-[10px] text-slate-500 font-bold">${p.time}</div>
                 `;
+                // 監聽修改後存檔
                 tdTime.onblur = () => saveData(true);
                 tr.appendChild(tdTime);
 
@@ -239,6 +239,7 @@
                     
                     const select = document.createElement('select');
                     select.id = `cell-${pIdx}-${d}`;
+                    // 字體大小自適應，強制置中
                     select.className = 'w-full h-10 md:h-14 bg-transparent text-center rounded-md md:rounded-lg cursor-pointer outline-none font-bold text-[11px] sm:text-xs md:text-lg transition-all appearance-none cell-hover shadow-inner';
                     
                     courses.forEach(c => {
@@ -337,12 +338,16 @@
 
         function saveData(silent = false) {
             const data = {};
+            // 課程儲存
             document.querySelectorAll('tbody select').forEach(s => {
                 data[s.id] = s.value;
             });
             localStorage.setItem(`poke_data_${currentPerson}`, JSON.stringify(data));
+            
+            // 標題儲存
             localStorage.setItem(`poke_global_title`, document.getElementById('main-title').innerText);
             
+            // 自定義時間儲存
             const timeData = {};
             document.querySelectorAll('.time-edit').forEach(td => {
                 timeData[td.id] = td.innerHTML;
@@ -353,12 +358,14 @@
         }
 
         function loadData() {
+            // 載入課程資料
             const savedData = localStorage.getItem(`poke_data_${currentPerson}`);
             const savedTitle = localStorage.getItem(`poke_global_title`);
             const savedTimes = localStorage.getItem(`poke_global_times`);
 
             if (savedTitle) document.getElementById('main-title').innerText = savedTitle;
             
+            // 載入自定義時間
             if (savedTimes) {
                 const timeData = JSON.parse(savedTimes);
                 for (const id in timeData) {
