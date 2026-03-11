@@ -125,9 +125,20 @@
             width: 100%;
         }
 
+        /* 班級模式輸入框樣式 */
+        .class-mode-input {
+            border-bottom: 2px solid var(--poke-blue);
+            background: transparent;
+            font-weight: bold;
+            text-align: center;
+            outline: none;
+            width: 80px;
+        }
+
         @media (min-width: 640px) {
             .teacher-select-custom { font-size: 10px; }
             .prefix-select, .course-select-custom { font-size: 11px; }
+            .class-mode-input { width: 120px; }
         }
 
         .editable-field:focus {
@@ -156,14 +167,30 @@
                     二苓國小 114 學年度課表
                 </h1>
 
-                <!-- 訓練家選單區域 -->
-                <div class="no-print flex flex-wrap justify-center items-center gap-1.5 md:gap-2 bg-white/90 p-1 md:p-2 rounded-xl border-2 border-slate-800 shadow-inner">
-                    <span class="font-bold text-[9px] md:text-xs">當前訓練家:</span>
-                    <select id="user-selector" onchange="handleUserSwitch()" class="bg-blue-50 border border-slate-400 rounded px-1 md:px-2 py-0.5 font-bold text-[9px] md:text-xs cursor-pointer min-w-[70px] sm:min-w-[100px]">
-                    </select>
-                    <button onclick="addNewTrainer()" class="bg-green-500 text-white px-1.5 py-0.5 rounded text-[9px] md:text-xs font-bold hover:bg-green-600 transition-colors">＋新增</button>
-                    <!-- 預設按鈕 -->
-                    <button id="btn-default" onclick="setDefaultTrainer()" class="bg-amber-400 text-slate-900 px-1.5 py-0.5 rounded text-[9px] md:text-xs font-bold hover:bg-amber-500 transition-colors">⭐ 設為預設</button>
+                <!-- 模式管理容器 -->
+                <div class="no-print flex flex-col gap-2 items-center w-full px-2">
+                    <!-- 第一行：訓練家選單 (寬度與第二行一致) -->
+                    <div class="flex flex-wrap justify-center items-center gap-1.5 md:gap-2 bg-white/90 p-1.5 md:p-2 rounded-xl border-2 border-slate-800 shadow-inner w-full max-w-[340px] sm:max-w-[500px]">
+                        <span class="font-bold text-[9px] md:text-xs">當前訓練家:</span>
+                        <select id="user-selector" onchange="handleUserSwitch()" class="bg-blue-50 border border-slate-400 rounded px-1 md:px-2 py-0.5 font-bold text-[9px] md:text-xs cursor-pointer min-w-[70px] sm:min-w-[100px]">
+                        </select>
+                        <button onclick="addNewTrainer()" class="bg-green-500 text-white px-1.5 py-0.5 rounded text-[9px] md:text-xs font-bold hover:bg-green-600 transition-colors">＋新增</button>
+                        <button id="btn-default" onclick="setDefaultTrainer()" class="bg-amber-400 text-slate-900 px-1.5 py-0.5 rounded text-[9px] md:text-xs font-bold hover:bg-amber-500 transition-colors">⭐ 設為預設</button>
+                    </div>
+
+                    <!-- 第二行：班級課表模式設定 (寬度與第一行一致) -->
+                    <div class="flex flex-wrap justify-center items-center gap-1.5 md:gap-3 bg-white/90 p-1.5 md:p-2 rounded-xl border-2 border-slate-800 shadow-inner w-full max-w-[340px] sm:max-w-[500px]">
+                        <div class="flex items-center gap-1">
+                            <span class="font-bold text-[9px] md:text-xs text-slate-700">班級課表:</span>
+                            <select id="class-mode-selector" onchange="handleClassModeChange()" class="bg-blue-50 border border-slate-400 rounded px-1 py-0.5 font-bold text-[9px] md:text-xs cursor-pointer min-w-[80px]">
+                                <!-- 動態生成 -->
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="font-bold text-[9px] md:text-xs text-slate-700">導師名字:</span>
+                            <input type="text" id="class-tutor-input" placeholder="輸入姓名" onblur="saveToLocal()" class="class-mode-input text-[9px] md:text-xs px-1 text-blue-800">
+                        </div>
+                    </div>
                 </div>
             </header>
         </div>
@@ -182,9 +209,7 @@
                             <th class="p-0.5 border-b-2 md:border-b-4 border-slate-800 font-black text-center">週五</th>
                         </tr>
                     </thead>
-                    <tbody id="timetable-body">
-                        <!-- 由 JavaScript 動態生成 -->
-                    </tbody>
+                    <tbody id="timetable-body"></tbody>
                 </table>
             </div>
         </div>
@@ -220,12 +245,23 @@
         const KNOWN_COURSES = ["國語", "英語", "數學", "生活", "社會", "自然", "藝術", "綜合", "健康", "體育", "彈性", "本土語", "資訊", "音樂", "藝表", "藝美"];
         const COURSES = ["", ...KNOWN_COURSES, "自定義"];
 
-        const CLASSES = [""];
+        // 班級前綴清單
+        const CLASSES_PREFIX = [""];
         [1, 2, 3, 4, 5, 6].forEach(grade => {
             const count = (grade === 4 || grade === 6) ? 4 : 3;
-            for (let i = 1; i <= count; i++) { CLASSES.push(`${grade}-${i}`); }
+            for (let i = 1; i <= count; i++) { CLASSES_PREFIX.push(`${grade}-${i}`); }
         });
-        CLASSES.push("自定義");
+        CLASSES_PREFIX.push("自定義");
+
+        // 班級模式選單
+        const CLASS_MODE_LIST = [{ val: "", text: "-- 班級 --" }];
+        [1, 2, 3, 4, 5, 6].forEach(grade => {
+            const count = (grade === 4 || grade === 6) ? 4 : 3;
+            for (let i = 1; i <= count; i++) { 
+                CLASS_MODE_LIST.push({ val: `${grade}-${i}`, text: `${grade}年${i}班` }); 
+            }
+        });
+        CLASS_MODE_LIST.push({ val: "自訂", text: "＋自訂" });
 
         const DEFAULT_PERIODS = [
             { name: "晨光", time: "08:00~08:25" },
@@ -239,16 +275,15 @@
             { name: "第七節", time: "15:20~16:00" }
         ];
 
-        // 核心儲存邏輯 (v14: 新增預設訓練家功能)
-        let appData = JSON.parse(localStorage.getItem('erling_poke_v14')) || {
+        // 讀取本地儲存 (升級儲存標籤確保穩定)
+        let appData = JSON.parse(localStorage.getItem('erling_poke_v15')) || {
             trainers: [], 
             currentTrainer: "", 
-            defaultTrainer: "", // 儲存預設要顯示的老師
+            defaultTrainer: "",
             schedules: {} 
         };
 
         window.onload = () => {
-            // 啟動邏輯：如果有設定預設，則優先顯示預設老師；否則維持空白
             if (appData.defaultTrainer && appData.trainers.includes(appData.defaultTrainer)) {
                 appData.currentTrainer = appData.defaultTrainer;
             } else {
@@ -256,11 +291,22 @@
             }
 
             renderTimetableSkeleton();
+            renderClassModeOptions();
             updateTrainerListUI();
             loadCurrentTrainerData();
         };
 
-        // 渲染表格骨架
+        function renderClassModeOptions() {
+            const sel = document.getElementById('class-mode-selector');
+            sel.innerHTML = '';
+            CLASS_MODE_LIST.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.val;
+                opt.text = item.text;
+                sel.appendChild(opt);
+            });
+        }
+
         function renderTimetableSkeleton() {
             const tbody = document.getElementById('timetable-body');
             tbody.innerHTML = '';
@@ -287,7 +333,7 @@
                     const selPrefix = document.createElement('select');
                     selPrefix.id = `prefix-${idx}-${d}`;
                     selPrefix.className = "prefix-select cursor-pointer";
-                    CLASSES.forEach(c => {
+                    CLASSES_PREFIX.forEach(c => {
                         const opt = document.createElement('option');
                         opt.value = c; opt.text = c || "班級"; selPrefix.appendChild(opt);
                     });
@@ -353,6 +399,20 @@
             saveToLocal();
         }
 
+        function handleClassModeChange() {
+            const sel = document.getElementById('class-mode-selector');
+            if (sel.value === "自訂") {
+                const custom = prompt("請輸入自訂班級前綴 (如 3-A):");
+                if (custom) {
+                    const opt = document.createElement('option');
+                    opt.value = custom; opt.text = custom;
+                    sel.insertBefore(opt, sel.lastChild);
+                    sel.value = custom;
+                } else { sel.value = ""; }
+            }
+            saveToLocal();
+        }
+
         function handleSelectChange(select, value, type, idx, d) {
             if (value === "自定義") {
                 const custom = prompt("請輸入自訂名稱：");
@@ -365,10 +425,25 @@
                 } else { select.value = ""; }
             }
 
-            if (type === 'course' && value !== "" && appData.currentTrainer !== "") {
+            if (type === 'course' && value !== "") {
+                const classMode = document.getElementById('class-mode-selector').value;
+                const classTutor = document.getElementById('class-tutor-input').value;
                 const teacherSel = document.getElementById(`teacher-${idx}-${d}`);
-                if (teacherSel && (teacherSel.value === "" || teacherSel.value === "老師")) {
-                    teacherSel.value = appData.currentTrainer;
+                const prefixSel = document.getElementById(`prefix-${idx}-${d}`);
+
+                if (classMode !== "" && classTutor !== "") {
+                    if (prefixSel) prefixSel.value = classMode;
+                    if (teacherSel) {
+                        if (!Array.from(teacherSel.options).some(o => o.value === classTutor)) {
+                            const o = document.createElement('option'); o.value = classTutor; o.text = classTutor;
+                            teacherSel.insertBefore(o, teacherSel.lastChild);
+                        }
+                        teacherSel.value = classTutor;
+                    }
+                } else {
+                    if (appData.currentTrainer !== "" && teacherSel && (teacherSel.value === "" || teacherSel.value === "老師")) {
+                        teacherSel.value = appData.currentTrainer;
+                    }
                 }
             } else if (type === 'course' && value === "") {
                 const teacherSel = document.getElementById(`teacher-${idx}-${d}`);
@@ -376,7 +451,6 @@
             }
             
             if (type === 'course') applyTypeStyle(select, idx, d);
-
             saveToLocal();
         }
 
@@ -390,28 +464,25 @@
             else { container.classList.add('type-custom'); select.style.color = "white"; }
         }
 
-        // 新功能：設定預設老師
         function setDefaultTrainer() {
-            if (!appData.currentTrainer) {
-                showToast("請先選擇一位老師");
-                return;
-            }
+            if (!appData.currentTrainer) { showToast("請先選擇一位訓練家"); return; }
             appData.defaultTrainer = appData.currentTrainer;
             saveToLocal();
-            updateTrainerListUI(); // 更新顯示星星
-            showToast(`已將 ${appData.currentTrainer} 設為啟動預設`);
+            updateTrainerListUI();
+            showToast(`已將 ${appData.currentTrainer} 設為預設`);
         }
 
         function saveToLocal() {
-            // 無論有沒有選訓練家都儲存 appData 本身
-            localStorage.setItem('erling_poke_v14', JSON.stringify(appData));
-
+            localStorage.setItem('erling_poke_v15', JSON.stringify(appData));
             if (appData.currentTrainer === "") return;
 
             const trainer = appData.currentTrainer;
-            if (!appData.schedules[trainer]) appData.schedules[trainer] = { prefix: {}, course: {}, teacher: {}, time: {}, title: "" };
+            if (!appData.schedules[trainer]) appData.schedules[trainer] = { prefix: {}, course: {}, teacher: {}, time: {}, title: "", classMode: "", classTutor: "" };
 
             appData.schedules[trainer].title = document.getElementById('main-title').innerText;
+            appData.schedules[trainer].classMode = document.getElementById('class-mode-selector').value;
+            appData.schedules[trainer].classTutor = document.getElementById('class-tutor-input').value;
+
             document.querySelectorAll('select[id^="prefix"]').forEach(s => appData.schedules[trainer].prefix[s.id] = s.value);
             document.querySelectorAll('select[id^="course"]').forEach(s => appData.schedules[trainer].course[s.id] = s.value);
             document.querySelectorAll('select[id^="teacher"]').forEach(s => appData.schedules[trainer].teacher[s.id] = s.value);
@@ -425,21 +496,39 @@
             });
             appData.schedules[trainer].time = timeData;
 
-            localStorage.setItem('erling_poke_v14', JSON.stringify(appData));
+            localStorage.setItem('erling_poke_v15', JSON.stringify(appData));
             showToast("自動同步中");
         }
 
         function loadCurrentTrainerData() {
             const trainer = appData.currentTrainer;
-            
             if (trainer === "") {
                 document.getElementById('main-title').innerText = "二苓國小 114 學年度課表";
+                document.getElementById('class-mode-selector').value = "";
+                document.getElementById('class-tutor-input').value = "";
                 resetTableUI();
                 return;
             }
 
             const data = appData.schedules[trainer];
             document.getElementById('main-title').innerText = (data && data.title) ? data.title : "二苓國小 114 學年度課表";
+            
+            const cmSel = document.getElementById('class-mode-selector');
+            const tutorInp = document.getElementById('class-tutor-input');
+            if (data) {
+                if (data.classMode) {
+                    if (!Array.from(cmSel.options).some(o => o.value === data.classMode)) {
+                        const o = document.createElement('option'); o.value = data.classMode; o.text = data.classMode;
+                        cmSel.insertBefore(o, cmSel.lastChild);
+                    }
+                    cmSel.value = data.classMode;
+                } else { cmSel.value = ""; }
+                tutorInp.value = data.classTutor || "";
+            } else {
+                cmSel.value = "";
+                tutorInp.value = "";
+            }
+
             resetTableUI(); 
             if (!data) return;
 
@@ -489,15 +578,12 @@
         function updateTrainerListUI() {
             const sel = document.getElementById('user-selector');
             sel.innerHTML = '';
-            
             const emptyOpt = document.createElement('option');
             emptyOpt.value = ""; emptyOpt.text = "-- 選擇 --"; 
             sel.appendChild(emptyOpt);
-
             appData.trainers.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t;
-                // 如果是預設老師，加上星星顯示
                 opt.text = (t === appData.defaultTrainer) ? `⭐ ${t}` : t; 
                 sel.appendChild(opt);
             });
@@ -507,9 +593,7 @@
         function handleUserSwitch() {
             appData.currentTrainer = document.getElementById('user-selector').value;
             loadCurrentTrainerData();
-            if (appData.currentTrainer !== "") {
-                showToast(`切換至: ${appData.currentTrainer}`);
-            }
+            if (appData.currentTrainer !== "") { showToast(`切換至: ${appData.currentTrainer}`); }
             saveToLocal();
         }
 
@@ -547,10 +631,7 @@
         function deleteTrainer() {
             if (appData.currentTrainer === "") return;
             if (confirm(`確定要刪除「${appData.currentTrainer}」嗎？`)) {
-                // 如果刪除的是預設老師，清除預設設定
-                if (appData.currentTrainer === appData.defaultTrainer) {
-                    appData.defaultTrainer = "";
-                }
+                if (appData.currentTrainer === appData.defaultTrainer) appData.defaultTrainer = "";
                 delete appData.schedules[appData.currentTrainer];
                 appData.trainers = appData.trainers.filter(t => t !== appData.currentTrainer);
                 appData.currentTrainer = ""; 
@@ -582,7 +663,7 @@
                     const content = JSON.parse(e.target.result);
                     if (content.trainers) {
                         appData = content;
-                        localStorage.setItem('erling_poke_v14', JSON.stringify(appData));
+                        localStorage.setItem('erling_poke_v15', JSON.stringify(appData));
                         location.reload();
                     }
                 } catch (err) { alert("檔案格式錯誤"); }
@@ -596,7 +677,7 @@
             toast.classList.remove('opacity-0');
             toast.classList.add('opacity-100');
             setTimeout(() => {
-                toast.classList.remove('opacity-100', 'toast-msg');
+                toast.classList.remove('opacity-100');
                 toast.classList.add('opacity-0');
             }, 1000);
         }
