@@ -43,7 +43,7 @@
         .type-藝表 { background-color: #f85888 !important; color: white !important; }
         .type-藝美 { background-color: #705898 !important; color: white !important; }
         /* 自定義課程專用色 */
-        .type-custom { background-color: #b0875e !important; color: white !important; border: 1px solid #8c6a4a !important; }
+        .type-custom { background-color: #b0875e !important; color: white !important; border: 2px solid #8c6a4a !important; }
 
         .game-card {
             border: 4px solid var(--poke-black);
@@ -87,6 +87,43 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            position: relative;
+        }
+
+        /* 老師名字標籤樣式 - 預設隱藏，有課時才顯示 */
+        .trainer-label {
+            position: absolute;
+            right: 1px;
+            bottom: 1px;
+            font-size: 9px;
+            line-height: 1;
+            padding: 2px 4px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            opacity: 0; /* 預設隱藏 */
+            display: none; /* 預設不佔位 */
+            pointer-events: auto;
+            white-space: nowrap;
+            z-index: 10;
+            min-width: 30px;
+            text-align: center;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        /* 當課程被選取時呈現的樣式 */
+        .has-course .trainer-label {
+            opacity: 1;
+            display: block;
+        }
+
+        .trainer-label:focus {
+            background: #fff;
+            box-shadow: 0 0 0 2px var(--poke-blue);
+            outline: none;
+            color: #000;
         }
 
         .editable-field:focus {
@@ -201,12 +238,17 @@
         };
 
         window.onload = () => {
+            // 強制每次進入都顯示李宜昆
+            if (appData.trainers.includes("李宜昆")) {
+                appData.currentTrainer = "李宜昆";
+            }
+            
             renderTimetableSkeleton();
             updateTrainerListUI();
             loadCurrentTrainerData();
         };
 
-        // 渲染基礎表格 (解決錯亂的關鍵：賦予每個編輯區專屬 ID)
+        // 渲染基礎表格
         function renderTimetableSkeleton() {
             const tbody = document.getElementById('timetable-body');
             tbody.innerHTML = '';
@@ -214,7 +256,6 @@
                 const tr = document.createElement('tr');
                 const tdTime = document.createElement('td');
                 tdTime.className = "p-0.5 border-r-4 border-b-2 border-slate-800 bg-slate-50 text-center w-[60px] sm:w-[75px]";
-                // 使用 tn- (time name) 和 tr- (time range) 作為 ID 避免錯亂
                 tdTime.innerHTML = `
                     <div id="tn-${idx}" contenteditable="true" class="editable-field font-bold text-slate-800 text-[10px] sm:text-xs" onblur="saveToLocal()">${p.name}</div>
                     <div id="tr-${idx}" contenteditable="true" class="editable-field text-[8px] sm:text-[9px] text-slate-500 font-bold leading-tight whitespace-nowrap" onblur="saveToLocal()">${p.time}</div>
@@ -246,8 +287,17 @@
                     });
                     selClass.onchange = (e) => handleSelectChange(selClass, e.target.value, 'class', idx, d);
 
+                    // 新增可編輯的老師名字標籤
+                    const trainerLabel = document.createElement('div');
+                    trainerLabel.id = `label-${idx}-${d}`;
+                    trainerLabel.className = "trainer-label";
+                    trainerLabel.contentEditable = "true";
+                    trainerLabel.innerText = appData.currentTrainer;
+                    trainerLabel.onblur = () => saveToLocal();
+
                     container.appendChild(selCourse);
                     container.appendChild(selClass);
+                    container.appendChild(trainerLabel);
                     td.appendChild(container);
                     tr.appendChild(td);
                 }
@@ -272,12 +322,13 @@
             saveToLocal();
         }
 
-        // 顏色套用邏輯
+        // 顏色套用與標籤顯示邏輯
         function applyTypeStyle(select, idx, d) {
             const val = select.value;
             const container = document.getElementById(`cell-box-${idx}-${d}`);
             if (!container) return;
 
+            // 清除現有所有 type 相關 class
             container.classList.forEach(className => {
                 if (className.startsWith('type-')) { container.classList.remove(className); }
             });
@@ -285,9 +336,13 @@
 
             if (!val) {
                 container.classList.add('type-none');
+                container.classList.remove('has-course'); // 隱藏標籤
                 select.style.color = "#94a3b8";
                 return;
             }
+
+            // 標記為已有課程，顯示老師標籤
+            container.classList.add('has-course');
 
             if (KNOWN_COURSES.includes(val)) {
                 container.classList.add(`type-${val}`);
@@ -300,7 +355,7 @@
 
         function saveToLocal() {
             const trainer = appData.currentTrainer;
-            if (!appData.schedules[trainer]) appData.schedules[trainer] = { course: {}, class: {}, time: {}, title: "" };
+            if (!appData.schedules[trainer]) appData.schedules[trainer] = { course: {}, class: {}, time: {}, labels: {}, title: "" };
 
             appData.schedules[trainer].title = document.getElementById('main-title').innerText;
             
@@ -308,16 +363,21 @@
             document.querySelectorAll('select[id^="course"]').forEach(s => appData.schedules[trainer].course[s.id] = s.value);
             document.querySelectorAll('select[id^="class"]').forEach(s => appData.schedules[trainer].class[s.id] = s.value);
             
-            // 儲存節次時間 (使用特定 ID 確保不亂掉)
+            // 儲存可編輯的老師標籤
+            document.querySelectorAll('.trainer-label').forEach(l => appData.schedules[trainer].labels[l.id] = l.innerText);
+            
+            // 儲存節次時間
             const timeData = {};
             DEFAULT_PERIODS.forEach((_, idx) => {
-                timeData[`tn-${idx}`] = document.getElementById(`tn-${idx}`).innerText;
-                timeData[`tr-${idx}`] = document.getElementById(`tr-${idx}`).innerText;
+                const tn = document.getElementById(`tn-${idx}`);
+                const tr = document.getElementById(`tr-${idx}`);
+                if (tn) timeData[`tn-${idx}`] = tn.innerText;
+                if (tr) timeData[`tr-${idx}`] = tr.innerText;
             });
             appData.schedules[trainer].time = timeData;
 
             localStorage.setItem('erling_poke_data', JSON.stringify(appData));
-            showToast("已儲存");
+            showToast("自動儲存中");
         }
 
         function loadCurrentTrainerData() {
@@ -328,7 +388,13 @@
 
             resetTableUI(); 
 
-            if (!data) return;
+            if (!data) {
+                // 如果沒有資料，標籤預設為當前訓練家名字
+                document.querySelectorAll('.trainer-label').forEach(label => {
+                    label.innerText = trainer;
+                });
+                return;
+            }
 
             // 載入課程
             if (data.course) {
@@ -356,7 +422,18 @@
                     }
                 });
             }
-            // 載入時間 (精確 ID 匹配)
+            // 載入老師標籤
+            if (data.labels) {
+                Object.entries(data.labels).forEach(([id, val]) => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerText = val;
+                });
+            } else {
+                document.querySelectorAll('.trainer-label').forEach(label => {
+                    label.innerText = trainer;
+                });
+            }
+            // 載入時間
             if (data.time) {
                 Object.entries(data.time).forEach(([id, val]) => {
                     const el = document.getElementById(id);
@@ -395,7 +472,6 @@
         }
 
         function resetTableUI() {
-            // 清除下拉選單與顏色
             document.querySelectorAll('select').forEach(s => {
                 s.value = "";
                 if (s.id.includes('course')) {
@@ -403,12 +479,15 @@
                     applyTypeStyle(s, parts[1], parts[2]);
                 }
             });
-            // 恢復預設節次名稱與時間
             DEFAULT_PERIODS.forEach((p, idx) => {
                 const tn = document.getElementById(`tn-${idx}`);
                 const tr = document.getElementById(`tr-${idx}`);
                 if (tn) tn.innerText = p.name;
                 if (tr) tr.innerText = p.time;
+            });
+            // 重置標籤顯示狀態
+            document.querySelectorAll('.merged-cell-container').forEach(c => {
+                c.classList.remove('has-course');
             });
         }
 
@@ -424,7 +503,7 @@
             if (confirm(`確定要刪除「${appData.currentTrainer}」嗎？`)) {
                 delete appData.schedules[appData.currentTrainer];
                 appData.trainers = appData.trainers.filter(t => t !== appData.currentTrainer);
-                appData.currentTrainer = appData.trainers[0];
+                appData.currentTrainer = "李宜昆"; 
                 updateTrainerListUI();
                 loadCurrentTrainerData();
                 localStorage.setItem('erling_poke_data', JSON.stringify(appData));
