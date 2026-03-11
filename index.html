@@ -88,7 +88,6 @@
             flex-direction: column;
         }
 
-        /* 班級選單 - 靠右 */
         .prefix-select {
             width: 50%; 
             background: transparent;
@@ -101,7 +100,6 @@
             padding-right: 1px;
         }
 
-        /* 課程選單 - 靠左 */
         .course-select-custom {
             width: 50%; 
             background: transparent;
@@ -114,7 +112,6 @@
             padding-left: 1px;
         }
 
-        /* 老師姓名選單 - 置中 */
         .teacher-select-custom {
             height: 33.33%;
             background: rgba(255, 255, 255, 0.2);
@@ -151,19 +148,22 @@
 <body class="p-1 md:p-6 min-h-screen text-slate-800">
 
     <div class="max-w-6xl mx-auto">
-        <!-- 頂部標題與管理區 -->
-        <div class="game-card rounded-2xl md:rounded-3xl overflow-hidden bg-white mb-3">
+        <!-- 頂部管理區 -->
+        <div class="game-card rounded-2xl md:rounded-3xl overflow-hidden bg-white mb-3 shadow-sm">
             <header class="poke-header p-2 md:p-4 flex flex-col items-center">
                 <div class="pokeball-center mb-2 animate-bounce"></div>
                 <h1 id="main-title" contenteditable="true" class="editable-field text-base sm:text-2xl md:text-4xl font-black text-slate-800 bg-white/95 px-4 md:px-6 py-1.5 rounded-full border-2 md:border-4 border-slate-800 shadow-sm text-center mb-3 whitespace-nowrap overflow-hidden">
                     二苓國小 114 學年度課表
                 </h1>
 
-                <div class="no-print flex items-center gap-2 bg-white/90 p-1 md:p-2 rounded-xl border-2 border-slate-800">
+                <!-- 訓練家選單區域 -->
+                <div class="no-print flex flex-wrap justify-center items-center gap-1.5 md:gap-2 bg-white/90 p-1 md:p-2 rounded-xl border-2 border-slate-800 shadow-inner">
                     <span class="font-bold text-[9px] md:text-xs">當前訓練家:</span>
-                    <select id="user-selector" onchange="handleUserSwitch()" class="bg-blue-50 border border-slate-400 rounded px-1 md:px-2 py-0.5 font-bold text-[9px] md:text-xs cursor-pointer">
+                    <select id="user-selector" onchange="handleUserSwitch()" class="bg-blue-50 border border-slate-400 rounded px-1 md:px-2 py-0.5 font-bold text-[9px] md:text-xs cursor-pointer min-w-[70px] sm:min-w-[100px]">
                     </select>
                     <button onclick="addNewTrainer()" class="bg-green-500 text-white px-1.5 py-0.5 rounded text-[9px] md:text-xs font-bold hover:bg-green-600 transition-colors">＋新增</button>
+                    <!-- 預設按鈕 -->
+                    <button id="btn-default" onclick="setDefaultTrainer()" class="bg-amber-400 text-slate-900 px-1.5 py-0.5 rounded text-[9px] md:text-xs font-bold hover:bg-amber-500 transition-colors">⭐ 設為預設</button>
                 </div>
             </header>
         </div>
@@ -182,12 +182,14 @@
                             <th class="p-0.5 border-b-2 md:border-b-4 border-slate-800 font-black text-center">週五</th>
                         </tr>
                     </thead>
-                    <tbody id="timetable-body"></tbody>
+                    <tbody id="timetable-body">
+                        <!-- 由 JavaScript 動態生成 -->
+                    </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- 底部功能鈕 -->
+        <!-- 功能按鈕 -->
         <div class="grid grid-cols-3 gap-1 md:gap-2 no-print pb-4">
             <button onclick="window.print()" class="flex flex-col items-center justify-center bg-amber-400 border-b-4 border-amber-700 p-1.5 rounded-xl font-bold text-[9px] sm:text-sm active:border-b-0 active:translate-y-1">
                 <span>🖨️</span><span class="whitespace-nowrap">列印課表</span>
@@ -210,11 +212,11 @@
 
     <!-- 提示框 -->
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-xl transition-all duration-300 z-50 font-bold text-xs text-center min-w-[180px]">
-        已儲存
+        已同步儲存
     </div>
 
     <script>
-        // 設定與資料庫初始化
+        // 設定資料
         const KNOWN_COURSES = ["國語", "英語", "數學", "生活", "社會", "自然", "藝術", "綜合", "健康", "體育", "彈性", "本土語", "資訊", "音樂", "藝表", "藝美"];
         const COURSES = ["", ...KNOWN_COURSES, "自定義"];
 
@@ -228,27 +230,31 @@
         const DEFAULT_PERIODS = [
             { name: "晨光", time: "08:00~08:25" },
             { name: "第一節", time: "08:30~09:10" },
-            { name: "二", time: "09:20~10:00" },
-            { name: "三", time: "10:30~11:10" },
-            { name: "四", time: "11:20~12:00" },
+            { name: "第二節", time: "09:20~10:00" },
+            { name: "第三節", time: "10:30~11:10" },
+            { name: "第四節", time: "11:20~12:00" },
             { name: "午休", time: "12:00~13:35" },
-            { name: "五", time: "13:40~14:20" },
-            { name: "六", time: "14:30~15:10" },
-            { name: "七", time: "15:20~16:00" }
+            { name: "第五節", time: "13:40~14:20" },
+            { name: "第六節", time: "14:30~15:10" },
+            { name: "第七節", time: "15:20~16:00" }
         ];
 
-        // 讀取本地儲存的完整資料包
-        let appData = JSON.parse(localStorage.getItem('erling_poke_v10')) || {
-            trainers: ["李宜昆"],
-            currentTrainer: "李宜昆",
+        // 核心儲存邏輯 (v14: 新增預設訓練家功能)
+        let appData = JSON.parse(localStorage.getItem('erling_poke_v14')) || {
+            trainers: [], 
+            currentTrainer: "", 
+            defaultTrainer: "", // 儲存預設要顯示的老師
             schedules: {} 
         };
 
         window.onload = () => {
-            // 每次載入時強制優先顯示李宜昆 (如果存在)
-            if (appData.trainers.includes("李宜昆")) {
-                appData.currentTrainer = "李宜昆";
+            // 啟動邏輯：如果有設定預設，則優先顯示預設老師；否則維持空白
+            if (appData.defaultTrainer && appData.trainers.includes(appData.defaultTrainer)) {
+                appData.currentTrainer = appData.defaultTrainer;
+            } else {
+                appData.currentTrainer = "";
             }
+
             renderTimetableSkeleton();
             updateTrainerListUI();
             loadCurrentTrainerData();
@@ -301,7 +307,7 @@
 
                     const selTeacher = document.createElement('select');
                     selTeacher.id = `teacher-${idx}-${d}`;
-                    selTeacher.className = "teacher-select-custom hover:bg-white/40 transition-all";
+                    selTeacher.className = "teacher-select-custom hover:bg-white/40 transition-all text-center";
                     updateTeacherDropdownOptions(selTeacher);
                     selTeacher.onchange = (e) => handleTeacherSelect(selTeacher, e.target.value);
 
@@ -315,12 +321,11 @@
             document.getElementById('main-title').onblur = () => saveToLocal();
         }
 
-        // 管理老師下拉選單內容
         function updateTeacherDropdownOptions(select) {
             const currentVal = select.value;
             select.innerHTML = '';
             const defOpt = document.createElement('option');
-            defOpt.value = ""; defOpt.text = "老師";
+            defOpt.value = ""; defOpt.text = ""; 
             select.appendChild(defOpt);
 
             appData.trainers.forEach(t => {
@@ -360,18 +365,17 @@
                 } else { select.value = ""; }
             }
 
-            // 選取課程後自動帶入當前訓練家姓名
-            if (type === 'course' && value !== "") {
+            if (type === 'course' && value !== "" && appData.currentTrainer !== "") {
                 const teacherSel = document.getElementById(`teacher-${idx}-${d}`);
                 if (teacherSel && (teacherSel.value === "" || teacherSel.value === "老師")) {
                     teacherSel.value = appData.currentTrainer;
                 }
-                applyTypeStyle(select, idx, d);
             } else if (type === 'course' && value === "") {
                 const teacherSel = document.getElementById(`teacher-${idx}-${d}`);
                 if (teacherSel) teacherSel.value = "";
-                applyTypeStyle(select, idx, d);
             }
+            
+            if (type === 'course') applyTypeStyle(select, idx, d);
 
             saveToLocal();
         }
@@ -386,8 +390,24 @@
             else { container.classList.add('type-custom'); select.style.color = "white"; }
         }
 
-        // 【關鍵】儲存至瀏覽器本地空間
+        // 新功能：設定預設老師
+        function setDefaultTrainer() {
+            if (!appData.currentTrainer) {
+                showToast("請先選擇一位老師");
+                return;
+            }
+            appData.defaultTrainer = appData.currentTrainer;
+            saveToLocal();
+            updateTrainerListUI(); // 更新顯示星星
+            showToast(`已將 ${appData.currentTrainer} 設為啟動預設`);
+        }
+
         function saveToLocal() {
+            // 無論有沒有選訓練家都儲存 appData 本身
+            localStorage.setItem('erling_poke_v14', JSON.stringify(appData));
+
+            if (appData.currentTrainer === "") return;
+
             const trainer = appData.currentTrainer;
             if (!appData.schedules[trainer]) appData.schedules[trainer] = { prefix: {}, course: {}, teacher: {}, time: {}, title: "" };
 
@@ -398,17 +418,26 @@
             
             const timeData = {};
             DEFAULT_PERIODS.forEach((_, idx) => {
-                timeData[`tn-${idx}`] = document.getElementById(`tn-${idx}`).innerText;
-                timeData[`tr-${idx}`] = document.getElementById(`tr-${idx}`).innerText;
+                const tn = document.getElementById(`tn-${idx}`);
+                const tr = document.getElementById(`tr-${idx}`);
+                if (tn) timeData[`tn-${idx}`] = tn.innerText;
+                if (tr) timeData[`tr-${idx}`] = tr.innerText;
             });
             appData.schedules[trainer].time = timeData;
 
-            localStorage.setItem('erling_poke_v10', JSON.stringify(appData));
-            showToast("已自動儲存");
+            localStorage.setItem('erling_poke_v14', JSON.stringify(appData));
+            showToast("自動同步中");
         }
 
         function loadCurrentTrainerData() {
             const trainer = appData.currentTrainer;
+            
+            if (trainer === "") {
+                document.getElementById('main-title').innerText = "二苓國小 114 學年度課表";
+                resetTableUI();
+                return;
+            }
+
             const data = appData.schedules[trainer];
             document.getElementById('main-title').innerText = (data && data.title) ? data.title : "二苓國小 114 學年度課表";
             resetTableUI(); 
@@ -460,9 +489,17 @@
         function updateTrainerListUI() {
             const sel = document.getElementById('user-selector');
             sel.innerHTML = '';
+            
+            const emptyOpt = document.createElement('option');
+            emptyOpt.value = ""; emptyOpt.text = "-- 選擇 --"; 
+            sel.appendChild(emptyOpt);
+
             appData.trainers.forEach(t => {
                 const opt = document.createElement('option');
-                opt.value = t; opt.text = t; sel.appendChild(opt);
+                opt.value = t;
+                // 如果是預設老師，加上星星顯示
+                opt.text = (t === appData.defaultTrainer) ? `⭐ ${t}` : t; 
+                sel.appendChild(opt);
             });
             sel.value = appData.currentTrainer;
         }
@@ -470,7 +507,9 @@
         function handleUserSwitch() {
             appData.currentTrainer = document.getElementById('user-selector').value;
             loadCurrentTrainerData();
-            showToast(`切換至: ${appData.currentTrainer}`);
+            if (appData.currentTrainer !== "") {
+                showToast(`切換至: ${appData.currentTrainer}`);
+            }
             saveToLocal();
         }
 
@@ -501,15 +540,20 @@
         }
 
         function clearCurrentData() {
+            if (appData.currentTrainer === "") { alert("請先選擇或新增一位訓練家"); return; }
             if (confirm("確定要清空當前課表嗎？")) { resetTableUI(); saveToLocal(); }
         }
 
         function deleteTrainer() {
-            if (appData.trainers.length <= 1) return;
+            if (appData.currentTrainer === "") return;
             if (confirm(`確定要刪除「${appData.currentTrainer}」嗎？`)) {
+                // 如果刪除的是預設老師，清除預設設定
+                if (appData.currentTrainer === appData.defaultTrainer) {
+                    appData.defaultTrainer = "";
+                }
                 delete appData.schedules[appData.currentTrainer];
                 appData.trainers = appData.trainers.filter(t => t !== appData.currentTrainer);
-                appData.currentTrainer = "李宜昆"; 
+                appData.currentTrainer = ""; 
                 updateTrainerListUI();
                 document.querySelectorAll('select[id^="teacher"]').forEach(sel => updateTeacherDropdownOptions(sel));
                 loadCurrentTrainerData();
@@ -517,7 +561,6 @@
             }
         }
 
-        // 【匯出】將瀏覽器資料打包下載
         function exportData() {
             const blob = new Blob([JSON.stringify(appData)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -530,7 +573,6 @@
 
         function triggerImport() { document.getElementById('file-import').click(); }
 
-        // 【匯入】將備份檔案還原至瀏覽器
         function importData(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -540,10 +582,10 @@
                     const content = JSON.parse(e.target.result);
                     if (content.trainers) {
                         appData = content;
-                        localStorage.setItem('erling_poke_v10', JSON.stringify(appData));
-                        location.reload(); // 重新整理以載入新資料
+                        localStorage.setItem('erling_poke_v14', JSON.stringify(appData));
+                        location.reload();
                     }
-                } catch (err) { alert("檔案讀取失敗，請確認檔案格式是否正確"); }
+                } catch (err) { alert("檔案格式錯誤"); }
             };
             reader.readAsText(file);
         }
@@ -554,7 +596,7 @@
             toast.classList.remove('opacity-0');
             toast.classList.add('opacity-100');
             setTimeout(() => {
-                toast.classList.remove('opacity-100');
+                toast.classList.remove('opacity-100', 'toast-msg');
                 toast.classList.add('opacity-0');
             }, 1000);
         }
