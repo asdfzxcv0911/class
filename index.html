@@ -28,7 +28,7 @@
         .type-none { background-color: #f1f5f9 !important; color: #94a3b8 !important; }
         .type-國語 { background-color: #ff4422 !important; color: white !important; }
         .type-英語 { background-color: #3399ff !important; color: white !important; }
-        .type-數學 { background-color: #ffcc33 !important; color: white !important; }
+        .type-數學 { background-color: #ffcc33 !important; color: #443300 !important; }
         .type-生活 { background-color: #77cc55 !important; color: white !important; }
         .type-自然 { background-color: #7ac852 !important; color: white !important; }
         .type-社會 { background-color: #b8a038 !important; color: white !important; }
@@ -77,6 +77,8 @@
             appearance: none;
             -webkit-appearance: none;
             outline: none;
+            text-align: center;
+            text-align-last: center; /* 確保選單選中文字置中 */
         }
 
         .merged-cell-container {
@@ -86,7 +88,7 @@
             flex-direction: column;
         }
 
-        /* 班級選單樣式 - 改為靠右對齊 */
+        /* 班級選單樣式 - 靠右對齊 */
         .prefix-select {
             width: 50%; 
             background: transparent;
@@ -95,11 +97,11 @@
             color: inherit;
             border: none;
             text-align: right;
-            text-align-last: right; /* 強制文字靠右 */
+            text-align-last: right; 
             padding-right: 1px;
         }
 
-        /* 課程選單樣式 - 改為靠左對齊 */
+        /* 課程選單樣式 - 靠左對齊 */
         .course-select-custom {
             width: 50%; 
             background: transparent;
@@ -108,8 +110,25 @@
             color: inherit;
             border: none;
             text-align: left;
-            text-align-last: left; /* 強制文字靠左 */
+            text-align-last: left; 
             padding-left: 1px;
+        }
+
+        /* 老師姓名選單樣式 */
+        .teacher-select-custom {
+            height: 33.33%;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 8px;
+            color: #333;
+            text-align: center;
+            text-align-last: center; /* 老師姓名置中 */
+            border: none;
+        }
+
+        @media (min-width: 640px) {
+            .teacher-select-custom { font-size: 10px; }
         }
 
         .editable-field:focus {
@@ -193,7 +212,7 @@
     </div>
 
     <script>
-        // 定義已知科目與班級
+        // 定義科目與班級名單
         const KNOWN_COURSES = ["國語", "英語", "數學", "生活", "社會", "自然", "藝術", "綜合", "健康", "體育", "彈性", "本土語", "資訊", "音樂", "藝表", "藝美"];
         const COURSES = ["", ...KNOWN_COURSES, "自定義"];
 
@@ -223,7 +242,7 @@
         };
 
         window.onload = () => {
-            appData.currentTrainer = "李宜昆"; // 進入預設
+            appData.currentTrainer = "李宜昆"; // 進入預設為李宜昆
             renderTimetableSkeleton();
             updateTrainerListUI();
             loadCurrentTrainerData();
@@ -276,10 +295,10 @@
                     topRow.appendChild(selPrefix);
                     topRow.appendChild(selCourse);
 
-                    // 下方 1/3: 老師姓名選單
+                    // 下方 1/3: 老師姓名選單 (已設定置中)
                     const selTeacher = document.createElement('select');
                     selTeacher.id = `teacher-${idx}-${d}`;
-                    selTeacher.className = "h-1/3 bg-white/20 cursor-pointer font-bold text-[8px] sm:text-[10px] text-slate-700 flex items-center justify-center hover:bg-white/40 transition-all text-center";
+                    selTeacher.className = "teacher-select-custom hover:bg-white/40 transition-all";
                     updateTeacherDropdownOptions(selTeacher);
                     selTeacher.onchange = (e) => handleTeacherSelect(selTeacher, e.target.value);
 
@@ -326,6 +345,7 @@
         }
 
         function handleSelectChange(select, value, type, idx, d) {
+            // 處理自定義選單
             if (value === "自定義") {
                 const custom = prompt("請輸入名稱：");
                 if (custom) {
@@ -336,7 +356,22 @@
                     select.value = custom;
                 } else { select.value = ""; }
             }
-            if (type === 'course') applyTypeStyle(select, idx, d);
+
+            // 重要邏輯：當選取科目後，自動帶入當前訓練家名字作為老師
+            if (type === 'course' && value !== "") {
+                const teacherSel = document.getElementById(`teacher-${idx}-${d}`);
+                // 如果老師欄位是空的或是預設字樣，自動帶入
+                if (teacherSel && (teacherSel.value === "" || teacherSel.value === "老師")) {
+                    teacherSel.value = appData.currentTrainer;
+                }
+                applyTypeStyle(select, idx, d);
+            } else if (type === 'course' && value === "") {
+                // 如果科目清空，則清空老師 (可選，這裡設定為同步清空)
+                const teacherSel = document.getElementById(`teacher-${idx}-${d}`);
+                if (teacherSel) teacherSel.value = "";
+                applyTypeStyle(select, idx, d);
+            }
+
             saveToLocal();
         }
 
