@@ -163,33 +163,33 @@
         <div class="game-card rounded-2xl md:rounded-3xl overflow-hidden bg-white mb-3 shadow-sm">
             <header class="poke-header p-2 md:p-5 flex flex-col items-center">
                 <div class="pokeball-center mb-3 animate-bounce"></div>
-                <!-- 大標題：字變大、更寬 -->
-                <h1 id="main-title" contenteditable="true" class="editable-field text-2xl sm:text-4xl md:text-6xl font-black text-slate-800 bg-white/95 px-8 md:px-12 py-2 md:py-3 rounded-full border-4 border-slate-800 shadow-sm text-center mb-4 whitespace-nowrap overflow-hidden tracking-widest">
+                <!-- 大標題：縮小尺寸，維持寬距質感 -->
+                <h1 id="main-title" contenteditable="true" class="editable-field text-xl sm:text-3xl md:text-4xl font-black text-slate-800 bg-white/95 px-6 md:px-10 py-2 rounded-full border-4 border-slate-800 shadow-sm text-center mb-4 whitespace-nowrap overflow-hidden tracking-wider">
                     二苓國小 114 學年度課表
                 </h1>
 
-                <!-- 模式管理容器 - 寬度縮短 -->
+                <!-- 模式管理容器 - 緊湊排列 -->
                 <div class="no-print flex flex-col gap-2 items-center w-full px-2">
-                    <!-- 第一行：訓練家選單 (縮短寬度) -->
-                    <div class="flex flex-wrap justify-center items-center gap-1 md:gap-2 bg-white/90 p-1.5 md:p-2 rounded-xl border-2 border-slate-800 shadow-inner w-full max-w-[280px] sm:max-w-[360px]">
+                    <!-- 第一行：訓練家選單 -->
+                    <div class="flex flex-wrap justify-center items-center gap-1.5 md:gap-2 bg-white/90 p-1.5 md:p-2 rounded-xl border-2 border-slate-800 shadow-inner w-full max-w-[280px] sm:max-w-[360px]">
                         <span class="font-bold text-[9px] md:text-xs">訓練家:</span>
-                        <select id="user-selector" onchange="handleUserSwitch()" class="bg-blue-50 border border-slate-400 rounded px-1 py-0.5 font-bold text-[9px] md:text-xs cursor-pointer min-w-[55px] sm:min-w-[80px]">
+                        <select id="user-selector" onchange="handleUserSwitch()" class="bg-blue-50 border border-slate-400 rounded px-1 md:px-2 py-0.5 font-bold text-[9px] md:text-xs cursor-pointer min-w-[55px] sm:min-w-[80px]">
                         </select>
                         <button onclick="addNewTrainer()" class="bg-green-500 text-white px-1.5 py-0.5 rounded text-[9px] md:text-xs font-bold hover:bg-green-600 transition-colors">＋</button>
                         <button id="btn-default" onclick="setDefaultTrainer()" class="bg-amber-400 text-slate-900 px-1.5 py-0.5 rounded text-[9px] md:text-xs font-bold hover:bg-amber-500 transition-colors">⭐ 預設</button>
                     </div>
 
-                    <!-- 第二行：班級課表模式設定 (縮短寬度) -->
-                    <div class="flex flex-wrap justify-center items-center gap-1 md:gap-3 bg-white/90 p-1.5 md:p-2 rounded-xl border-2 border-slate-800 shadow-inner w-full max-w-[280px] sm:max-w-[360px]">
+                    <!-- 第二行：班級課表模式設定 -->
+                    <div class="flex flex-wrap justify-center items-center gap-1.5 md:gap-3 bg-white/90 p-1.5 md:p-2 rounded-xl border-2 border-slate-800 shadow-inner w-full max-w-[280px] sm:max-w-[360px]">
                         <div class="flex items-center gap-1">
                             <span class="font-bold text-[9px] md:text-xs text-slate-700">班級:</span>
                             <select id="class-mode-selector" onchange="handleClassModeChange()" class="bg-blue-50 border border-slate-400 rounded px-1 py-0.5 font-bold text-[9px] md:text-xs cursor-pointer min-w-[65px] sm:min-w-[85px]">
-                                <!-- 動態生成 -->
+                                <!-- 由 JS 生成 -->
                             </select>
                         </div>
                         <div class="flex items-center gap-1">
                             <span class="font-bold text-[9px] md:text-xs text-slate-700">導師:</span>
-                            <input type="text" id="class-tutor-input" placeholder="姓名" onblur="saveToLocal()" class="class-mode-input text-[9px] md:text-xs px-1 text-blue-800">
+                            <input type="text" id="class-tutor-input" placeholder="姓名" oninput="saveToLocal()" onblur="saveToLocal()" class="class-mode-input text-[9px] md:text-xs px-1 text-blue-800">
                         </div>
                     </div>
                 </div>
@@ -236,6 +236,7 @@
         </div>
     </div>
 
+    <!-- 提示框 -->
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-xl transition-all duration-300 z-50 font-bold text-xs text-center min-w-[180px]">
         已同步儲存
     </div>
@@ -272,7 +273,8 @@
             { name: "第七節", time: "15:20~16:00" }
         ];
 
-        let appData = JSON.parse(localStorage.getItem('erling_poke_v15')) || {
+        // 使用 v16 儲存標籤
+        let appData = JSON.parse(localStorage.getItem('erling_poke_v16')) || {
             trainers: [], 
             currentTrainer: "", 
             defaultTrainer: "",
@@ -403,7 +405,7 @@
                     sel.value = custom;
                 } else { sel.value = ""; }
             }
-            saveToLocal();
+            saveToLocal(); 
         }
 
         function handleSelectChange(select, value, type, idx, d) {
@@ -455,26 +457,21 @@
             else { container.classList.add('type-custom'); select.style.color = "white"; }
         }
 
-        // 修改：具備切換功能的預設按鈕
         function setDefaultTrainer() {
             if (!appData.currentTrainer) { showToast("請先選擇一位訓練家"); return; }
-            
             if (appData.defaultTrainer === appData.currentTrainer) {
-                // 如果已經是預設，則解除預設
                 appData.defaultTrainer = "";
                 showToast(`已解除 ${appData.currentTrainer} 的預設狀態`);
             } else {
-                // 否則設為預設
                 appData.defaultTrainer = appData.currentTrainer;
                 showToast(`已將 ${appData.currentTrainer} 設為預設`);
             }
-            
             saveToLocal();
             updateTrainerListUI();
         }
 
         function saveToLocal() {
-            localStorage.setItem('erling_poke_v15', JSON.stringify(appData));
+            localStorage.setItem('erling_poke_v16', JSON.stringify(appData));
             if (appData.currentTrainer === "") return;
             const trainer = appData.currentTrainer;
             if (!appData.schedules[trainer]) appData.schedules[trainer] = { prefix: {}, course: {}, teacher: {}, time: {}, title: "", classMode: "", classTutor: "" };
@@ -492,23 +489,20 @@
                 if (tr) timeData[`tr-${idx}`] = tr.innerText;
             });
             appData.schedules[trainer].time = timeData;
-            localStorage.setItem('erling_poke_v15', JSON.stringify(appData));
+            localStorage.setItem('erling_poke_v16', JSON.stringify(appData));
             showToast("自動同步中");
         }
 
         function loadCurrentTrainerData() {
             const trainer = appData.currentTrainer;
+            const cmSel = document.getElementById('class-mode-selector');
+            const tutorInp = document.getElementById('class-tutor-input');
             if (trainer === "") {
                 document.getElementById('main-title').innerText = "二苓國小 114 學年度課表";
-                document.getElementById('class-mode-selector').value = "";
-                document.getElementById('class-tutor-input').value = "";
-                resetTableUI();
-                return;
+                cmSel.value = ""; tutorInp.value = ""; resetTableUI(); return;
             }
             const data = appData.schedules[trainer];
             document.getElementById('main-title').innerText = (data && data.title) ? data.title : "二苓國小 114 學年度課表";
-            const cmSel = document.getElementById('class-mode-selector');
-            const tutorInp = document.getElementById('class-tutor-input');
             if (data) {
                 if (data.classMode) {
                     if (!Array.from(cmSel.options).some(o => o.value === data.classMode)) {
@@ -519,8 +513,7 @@
                 } else { cmSel.value = ""; }
                 tutorInp.value = data.classTutor || "";
             } else {
-                cmSel.value = "";
-                tutorInp.value = "";
+                cmSel.value = ""; tutorInp.value = "";
             }
             resetTableUI(); 
             if (!data) return;
@@ -616,8 +609,8 @@
         }
 
         function clearCurrentData() {
-            if (appData.currentTrainer === "") { alert("請先選擇或新增一位訓練家"); return; }
-            if (confirm("確定要清空當前課表嗎？")) { resetTableUI(); saveToLocal(); }
+            if (appData.currentTrainer === "") { alert("請先選擇一位訓練家"); return; }
+            if (confirm("確定要清空目前這張課表嗎？")) { resetTableUI(); saveToLocal(); }
         }
 
         function deleteTrainer() {
@@ -655,7 +648,7 @@
                     const content = JSON.parse(e.target.result);
                     if (content.trainers) {
                         appData = content;
-                        localStorage.setItem('erling_poke_v15', JSON.stringify(appData));
+                        localStorage.setItem('erling_poke_v16', JSON.stringify(appData));
                         location.reload();
                     }
                 } catch (err) { alert("檔案格式錯誤"); }
